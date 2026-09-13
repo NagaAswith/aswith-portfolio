@@ -24,11 +24,18 @@ const KNOWN_DEFAULT_JWT_SECRETS = [
 
 const KNOWN_DEFAULT_PASSKEYS = ['aswith-enter4', 'admin', 'password', '123456'];
 
+function normalizeSecret(val: string | undefined | null): string {
+  if (!val || typeof val !== 'string') return '';
+  return val.trim().replace(/^["']|["']$/g, '').trim();
+}
+
 export function validateEnv(): AppEnvConfig {
   const isProduction = process.env.NODE_ENV === 'production';
   const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
-  const adminPasskey = process.env.ADMIN_PASSKEY || 'aswith-enter4';
-  const effectiveSecret = process.env.ADMIN_JWT_SECRET || process.env.ADMIN_PASSKEY;
+  const cleanPasskey = normalizeSecret(process.env.ADMIN_PASSKEY);
+  const adminPasskey = cleanPasskey || 'aswith-enter4';
+  const rawEffective = process.env.ADMIN_JWT_SECRET || process.env.ADMIN_PASSKEY;
+  const effectiveSecret = normalizeSecret(rawEffective);
   const jwtSecret =
     effectiveSecret ||
     'aswith-portfolio-master-jwt-secret-key-2026';
@@ -40,13 +47,14 @@ export function validateEnv(): AppEnvConfig {
       throw new Error('[EnvSecurity] FATAL: DATABASE_URL must be explicitly provided in production.');
     }
 
-    if (!effectiveSecret || KNOWN_DEFAULT_JWT_SECRETS.includes(effectiveSecret.trim())) {
+    if (!effectiveSecret || KNOWN_DEFAULT_JWT_SECRETS.includes(effectiveSecret)) {
       throw new Error('[EnvSecurity] FATAL: ADMIN_JWT_SECRET (or ADMIN_PASSKEY) must be explicitly provided in production and cannot use default fallback.');
     }
 
+    const cleanHash = normalizeSecret(process.env.ADMIN_PASSKEY_HASH);
     if (
-      (!process.env.ADMIN_PASSKEY || KNOWN_DEFAULT_PASSKEYS.includes(process.env.ADMIN_PASSKEY.trim())) &&
-      !process.env.ADMIN_PASSKEY_HASH
+      (!cleanPasskey || KNOWN_DEFAULT_PASSKEYS.includes(cleanPasskey)) &&
+      !cleanHash
     ) {
       throw new Error('[EnvSecurity] FATAL: ADMIN_PASSKEY (or ADMIN_PASSKEY_HASH) must be explicitly configured in production and cannot use default fallback.');
     }

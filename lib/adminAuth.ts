@@ -12,16 +12,22 @@ const KNOWN_DEFAULT_JWT_SECRETS = [
 
 const KNOWN_DEFAULT_PASSKEYS = ['aswith-enter4', 'admin', 'password', '123456'];
 
+function normalizeSecret(val: string | undefined | null): string {
+  if (!val || typeof val !== 'string') return '';
+  return val.trim().replace(/^["']|["']$/g, '').trim();
+}
+
 function getJwtSecret(): Uint8Array {
   const isProduction = process.env.NODE_ENV === 'production';
   const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NEXT_BUILD === 'true';
-  const effectiveSecret = process.env.ADMIN_JWT_SECRET || process.env.ADMIN_PASSKEY;
+  const rawEffective = process.env.ADMIN_JWT_SECRET || process.env.ADMIN_PASSKEY;
+  const effectiveSecret = normalizeSecret(rawEffective);
   const rawSecret = effectiveSecret || 'aswith-portfolio-master-jwt-secret-key-2026';
 
   if (
     isProduction &&
     !isBuildPhase &&
-    (!effectiveSecret || KNOWN_DEFAULT_JWT_SECRETS.includes(effectiveSecret.trim()))
+    (!effectiveSecret || KNOWN_DEFAULT_JWT_SECRETS.includes(effectiveSecret))
   ) {
     throw new Error(
       '[AdminAuth] FATAL: ADMIN_JWT_SECRET (or ADMIN_PASSKEY) must be explicitly provided in production and cannot use default fallback.'
@@ -74,14 +80,15 @@ export async function verifyAdminToken(token: string): Promise<AdminSessionPaylo
  */
 export function verifyAdminPasskey(passkey: string): boolean {
   if (!passkey || typeof passkey !== 'string') return false;
-  const input = passkey.trim();
+  const input = normalizeSecret(passkey);
 
   const isProduction = process.env.NODE_ENV === 'production';
 
   const envHash = process.env.ADMIN_PASSKEY_HASH;
   if (envHash) {
     try {
-      if (bcrypt.compareSync(input, envHash)) {
+      const cleanHash = normalizeSecret(envHash);
+      if (bcrypt.compareSync(input, cleanHash)) {
         return true;
       }
     } catch {
@@ -89,13 +96,16 @@ export function verifyAdminPasskey(passkey: string): boolean {
     }
   }
 
-  if (isProduction && (!process.env.ADMIN_PASSKEY || KNOWN_DEFAULT_PASSKEYS.includes(process.env.ADMIN_PASSKEY.trim()))) {
+  const rawMaster = process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY;
+  const cleanMaster = normalizeSecret(rawMaster);
+
+  if (isProduction && (!cleanMaster || KNOWN_DEFAULT_PASSKEYS.includes(cleanMaster))) {
     console.error('[AdminAuth] Insecure default ADMIN_PASSKEY rejected in production mode.');
     return false;
   }
 
-  const masterKey = process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY || 'aswith-enter4';
-  return input === masterKey.trim();
+  const masterKey = cleanMaster || 'aswith-enter4';
+  return input === masterKey || input === (rawMaster ? rawMaster.trim() : '');
 }
 
 /**
