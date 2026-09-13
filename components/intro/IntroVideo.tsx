@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import { useIntroStore } from '@/store/useIntroStore';
+import { resolveSupabaseMediaUrl } from '@/lib/storage/supabaseMedia';
 
 export function IntroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -96,7 +97,7 @@ export function IntroVideo() {
     >
       <video
         ref={videoRef}
-        src="/media/intro/intro-video.mp4"
+        src={resolveSupabaseMediaUrl('intro/intro-video.mp4')}
         autoPlay
         playsInline
         disablePictureInPicture

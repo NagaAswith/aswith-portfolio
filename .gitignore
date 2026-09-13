@@ -53,9 +53,6 @@ prisma/*.db
 prisma/*.db-journal
 
 # production media (hosted and served live via Supabase Storage bucket)
-public/media/certificates/
-public/media/profile/
-public/media/projects/
-public/media/reference/
-public/media/selfintro/
+public/media/
+*.mp4
 *.mov
