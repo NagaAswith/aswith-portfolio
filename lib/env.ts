@@ -28,9 +28,9 @@ export function validateEnv(): AppEnvConfig {
   const isProduction = process.env.NODE_ENV === 'production';
   const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
   const adminPasskey = process.env.ADMIN_PASSKEY || 'aswith-enter4';
+  const effectiveSecret = process.env.ADMIN_JWT_SECRET || process.env.ADMIN_PASSKEY;
   const jwtSecret =
-    process.env.ADMIN_JWT_SECRET ||
-    process.env.ADMIN_PASSKEY ||
+    effectiveSecret ||
     'aswith-portfolio-master-jwt-secret-key-2026';
 
   const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NEXT_BUILD === 'true';
@@ -40,8 +40,8 @@ export function validateEnv(): AppEnvConfig {
       throw new Error('[EnvSecurity] FATAL: DATABASE_URL must be explicitly provided in production.');
     }
 
-    if (!process.env.ADMIN_JWT_SECRET || KNOWN_DEFAULT_JWT_SECRETS.includes(process.env.ADMIN_JWT_SECRET.trim())) {
-      throw new Error('[EnvSecurity] FATAL: ADMIN_JWT_SECRET must be explicitly provided in production and cannot use default fallback.');
+    if (!effectiveSecret || KNOWN_DEFAULT_JWT_SECRETS.includes(effectiveSecret.trim())) {
+      throw new Error('[EnvSecurity] FATAL: ADMIN_JWT_SECRET (or ADMIN_PASSKEY) must be explicitly provided in production and cannot use default fallback.');
     }
 
     if (

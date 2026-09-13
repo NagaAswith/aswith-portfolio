@@ -18,7 +18,10 @@ function getPrismaClient(): AppPrismaClient {
 
   let client: AppPrismaClient;
   if (isPostgres) {
-    const pool = new pg.Pool({ connectionString: url });
+    const pool = new pg.Pool({
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
+    });
     const adapter = new PrismaPg(pool);
     client = new PostgresPrismaClient({
       adapter,
@@ -32,9 +35,7 @@ function getPrismaClient(): AppPrismaClient {
     });
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
 
   return client;
 }

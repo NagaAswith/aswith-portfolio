@@ -51,9 +51,19 @@ export function IntroVideo() {
       });
   }, [setMuted]);
 
-  // Handle actual video ended event — the only valid signal to show Enter the World
+  // Handle actual video ended event or error — the only valid signal to show Enter the World
   const handleEnded = useCallback(() => {
     setIntroState('MESSAGE_READY');
+  }, [setIntroState]);
+
+  // Failsafe: if video fails to load/play or stalls, ensure the experience does not hang indefinitely on black screen
+  useEffect(() => {
+    const failsafeTimer = setTimeout(() => {
+      if (useIntroStore.getState().introState === 'INTRO_PLAYING') {
+        setIntroState('MESSAGE_READY');
+      }
+    }, 10000);
+    return () => clearTimeout(failsafeTimer);
   }, [setIntroState]);
 
   // Determine transition phase visibility
@@ -93,6 +103,7 @@ export function IntroVideo() {
         // muted controlled imperatively via useEffect to allow audio autoplay
         preload="auto"
         onEnded={handleEnded}
+        onError={handleEnded}
         // no loop — stays on final frame after ended
         style={{
           width: '100%',

@@ -15,13 +15,17 @@ const KNOWN_DEFAULT_PASSKEYS = ['aswith-enter4', 'admin', 'password', '123456'];
 function getJwtSecret(): Uint8Array {
   const isProduction = process.env.NODE_ENV === 'production';
   const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NEXT_BUILD === 'true';
-  const rawSecret =
-    process.env.ADMIN_JWT_SECRET ||
-    process.env.ADMIN_PASSKEY ||
-    'aswith-portfolio-master-jwt-secret-key-2026';
+  const effectiveSecret = process.env.ADMIN_JWT_SECRET || process.env.ADMIN_PASSKEY;
+  const rawSecret = effectiveSecret || 'aswith-portfolio-master-jwt-secret-key-2026';
 
-  if (isProduction && !isBuildPhase && (!process.env.ADMIN_JWT_SECRET || KNOWN_DEFAULT_JWT_SECRETS.includes(process.env.ADMIN_JWT_SECRET.trim()))) {
-    throw new Error('[AdminAuth] FATAL: ADMIN_JWT_SECRET must be explicitly provided in production and cannot use default fallback.');
+  if (
+    isProduction &&
+    !isBuildPhase &&
+    (!effectiveSecret || KNOWN_DEFAULT_JWT_SECRETS.includes(effectiveSecret.trim()))
+  ) {
+    throw new Error(
+      '[AdminAuth] FATAL: ADMIN_JWT_SECRET (or ADMIN_PASSKEY) must be explicitly provided in production and cannot use default fallback.'
+    );
   }
 
   return new TextEncoder().encode(rawSecret);
