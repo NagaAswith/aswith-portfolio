@@ -1,0 +1,141 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/postgres-client"
+}
+
+model Project {
+  id               String   @id
+  slug             String   @unique
+  number           String   @default("01")
+  displayOrder     Int      @default(0)
+  isPublished      Boolean  @default(true)
+  title            String
+  category         String
+  categories       String
+  domain           String
+  organization     String?
+  shortDescription String
+  fullDescription  String
+  technologies     String
+  features         String
+  mainImage        String
+  liveUrl          String?
+  githubUrl        String?
+  year             String
+  status           String
+  featured         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  galleryImages ProjectGalleryImage[]
+}
+
+model ProjectGalleryImage {
+  id        String  @id @default(cuid())
+  projectId String
+  imageUrl  String
+  order     Int     @default(0)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Certificate {
+  id                String   @id
+  number            String   @default("01")
+  displayOrder      Int      @default(0)
+  isPublished       Boolean  @default(true)
+  title             String
+  issuer            String
+  category          String
+  date              String
+  score             String?
+  certificationTier String?
+  credentialId      String?
+  duration          String?
+  description       String
+  skills            String
+  image             String
+  verificationUrl   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Skill {
+  id           String   @id
+  name         String
+  category     String
+  proficiency  Int
+  connectedIds String
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Education {
+  id                 String   @id
+  degree             String
+  institution        String
+  period             String
+  cgpa               String
+  expectedGraduation String
+  field              String
+  highlights         String
+  displayOrder       Int      @default(0)
+  isPublished        Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Experience {
+  id           String   @id
+  organization String
+  title        String
+  period       String
+  type         String
+  location     String
+  description  String
+  highlights   String
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Achievement {
+  id           String   @id
+  metric       String
+  title        String
+  category     String
+  description  String
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PersonalInfo {
+  id               String   @id @default("default")
+  name             String
+  fullName         String
+  greeting         String
+  title            String
+  roles            String
+  tagline          String
+  description      String
+  selfIntroVideo   String
+  educationSummary String
+  cta              String
+  social           String
+  media            String
+  updatedAt        DateTime @updatedAt
+}
+
+model RetiredId {
+  id        String   @id
+  entity    String
+  retiredAt DateTime @default(now())
+}
