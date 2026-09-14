@@ -161,7 +161,7 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
           onWheel={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pt-[72px] pb-6 px-4 sm:px-6 md:px-8 bg-black/92 backdrop-blur-3xl overflow-hidden overscroll-contain"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pt-[64px] sm:pt-[72px] pb-4 sm:pb-6 px-3 sm:px-6 md:px-8 bg-black/92 backdrop-blur-3xl overflow-hidden overscroll-contain"
           style={{ touchAction: 'none' }}
           onClick={handleClose}
           role="dialog"
@@ -232,10 +232,10 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
               style={{
                 width: '100%',
                 maxWidth: '820px',
-                maxHeight: 'calc(100vh - 96px)',
+                maxHeight: 'calc(100dvh - 5rem)',
                 touchAction: 'pan-y',
               }}
-              className="relative flex flex-col rounded-3xl overflow-hidden text-white bg-zinc-950/95 backdrop-blur-2xl border border-emerald-500/30 shadow-[0_35px_120px_rgba(0,0,0,0.98),0_0_60px_rgba(52,211,153,0.12)] overscroll-contain"
+              className="relative flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden text-white bg-zinc-950/95 backdrop-blur-2xl border border-emerald-500/30 shadow-[0_35px_120px_rgba(0,0,0,0.98),0_0_60px_rgba(52,211,153,0.12)] overscroll-contain"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Glass sweep highlight (cinematic expansion flash) */}
@@ -252,7 +252,7 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
 
               {/* Solid 100% Opaque Surface + Emerald Sheen */}
               <div
-                className="absolute inset-0 rounded-3xl pointer-events-none z-0"
+                className="absolute inset-0 rounded-2xl sm:rounded-3xl pointer-events-none z-0"
                 style={{
                   backgroundColor: '#09090b',
                   backgroundImage:
@@ -261,10 +261,10 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
               />
 
               {/* Top Sheen Edge Highlight */}
-              <div className="absolute inset-0 rounded-3xl pointer-events-none border border-emerald-400/20 bg-gradient-to-b from-white/15 via-transparent to-transparent opacity-60 z-20" />
+              <div className="absolute inset-0 rounded-2xl sm:rounded-3xl pointer-events-none border border-emerald-400/20 bg-gradient-to-b from-white/15 via-transparent to-transparent opacity-60 z-20" />
 
               {/* ── Fixed Inspection Card Header ───────────────────────── */}
-              <div className="relative z-30 flex items-center justify-between px-6 sm:px-8 py-4.5 border-b border-white/10 shrink-0 bg-zinc-950/90 backdrop-blur-md">
+              <div className="relative z-30 flex items-center justify-between px-4 sm:px-8 py-3.5 sm:py-4.5 border-b border-white/10 shrink-0 bg-zinc-950/90 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                   <span className="px-3 py-1 rounded-full text-[11px] font-mono tracking-widest uppercase bg-emerald-950/60 text-emerald-300 border border-emerald-500/30">
                     CREDENTIAL #{certificate.number}
@@ -291,7 +291,7 @@ export function CertificateModal({ certificate, onClose }: CertificateModalProps
 
               {/* ── Isolated Internal Scroll Container ─────────────────── */}
               <div
-                className="overflow-y-auto overscroll-contain p-6 sm:p-8 flex-1 relative z-30 space-y-6 focus:outline-none scrollbar-thin scrollbar-thumb-emerald-500/30 scrollbar-track-transparent"
+                className="overflow-y-auto overscroll-contain p-4 sm:p-8 flex-1 relative z-30 space-y-6 focus:outline-none scrollbar-thin scrollbar-thumb-emerald-500/30 scrollbar-track-transparent"
                 style={{ touchAction: 'pan-y' }}
                 onWheel={(e) => e.stopPropagation()}
               >

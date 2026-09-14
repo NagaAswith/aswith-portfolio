@@ -147,12 +147,12 @@ function DeleteConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="w-full max-w-md bg-zinc-950 border border-red-500/30 rounded-2xl p-6 shadow-2xl space-y-5 text-white"
+        className="w-full max-w-md max-h-[90dvh] overflow-y-auto bg-zinc-950 border border-red-500/30 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 sm:space-y-5 text-white my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 text-red-400">
@@ -285,16 +285,16 @@ function ProjectEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="w-full max-w-4xl bg-zinc-950 border border-white/20 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-white"
+        className="w-full max-w-4xl bg-zinc-950 border border-white/20 rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden text-white my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0 bg-zinc-900/60">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 shrink-0 bg-zinc-900/60">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
               <FolderGit2 className="w-5 h-5" />
@@ -839,15 +839,15 @@ function CertificateEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="w-full max-w-3xl bg-zinc-950 border border-white/20 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-white"
+        className="w-full max-w-3xl bg-zinc-950 border border-white/20 rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] overflow-hidden text-white my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0 bg-zinc-900/60">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 shrink-0 bg-zinc-900/60">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               <Award className="w-5 h-5" />
@@ -1113,15 +1113,15 @@ function SkillEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-xl overflow-y-auto">
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="w-full max-w-lg bg-zinc-950 border border-amber-500/30 rounded-2xl shadow-2xl overflow-hidden text-white"
+        className="w-full max-w-lg bg-zinc-950 border border-amber-500/30 rounded-2xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[90dvh] my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-zinc-900/60">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <Cpu className="w-5 h-5" />
@@ -1144,13 +1144,13 @@ function SkillEditorModal({
         </div>
 
         {validationError && (
-          <div className="px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300">
+          <div className="px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300 shrink-0">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{validationError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
           <div className="space-y-1">
             <label className="font-mono text-white/50 block">SKILL NAME *</label>
             <input
@@ -1300,15 +1300,15 @@ function ExperienceEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="w-full max-w-2xl bg-zinc-950 border border-white/20 rounded-2xl shadow-2xl overflow-hidden text-white"
+        className="w-full max-w-2xl max-h-[90dvh] flex flex-col bg-zinc-950 border border-white/20 rounded-2xl shadow-2xl overflow-hidden text-white my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-zinc-900/60">
+        <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/10 bg-zinc-900/60">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
               <Briefcase className="w-5 h-5" />
@@ -1331,13 +1331,13 @@ function ExperienceEditorModal({
         </div>
 
         {validationError && (
-          <div className="px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300">
+          <div className="shrink-0 px-4 sm:px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{validationError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="font-mono text-white/50 block">ROLE / POSITION TITLE *</label>
@@ -1555,15 +1555,15 @@ function EducationEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="w-full max-w-2xl bg-zinc-950 border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden text-white"
+        className="w-full max-w-2xl max-h-[90dvh] flex flex-col bg-zinc-950 border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden text-white my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-zinc-900/60">
+        <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/10 bg-zinc-900/60">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               <GraduationCap className="w-5 h-5" />
@@ -1586,13 +1586,13 @@ function EducationEditorModal({
         </div>
 
         {validationError && (
-          <div className="px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300">
+          <div className="shrink-0 px-4 sm:px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{validationError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
           <div className="space-y-1">
             <label className="font-mono text-white/50 block">DEGREE / PROGRAM *</label>
             <input
@@ -1782,15 +1782,15 @@ function AchievementEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto">
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="w-full max-w-lg bg-zinc-950 border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden text-white"
+        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-zinc-950 border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden text-white my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-zinc-900/60">
+        <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/10 bg-zinc-900/60">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
               <Trophy className="w-5 h-5" />
@@ -1813,13 +1813,13 @@ function AchievementEditorModal({
         </div>
 
         {validationError && (
-          <div className="px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300">
+          <div className="shrink-0 px-4 sm:px-6 py-2.5 bg-red-950/40 border-b border-red-500/30 flex items-center gap-2 text-xs font-mono text-red-300">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{validationError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="font-mono text-white/50 block">METRIC / BADGE *</label>
@@ -2312,7 +2312,7 @@ export function AdminDashboard() {
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col selection:bg-cyan-500 selection:text-black">
       {/* Top Admin Navbar */}
-      <header className="border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
             <ShieldCheck className="w-5 h-5" />
@@ -2353,7 +2353,7 @@ export function AdminDashboard() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 right-6 z-50 px-4 py-2.5 rounded-xl bg-zinc-900 border border-cyan-500/40 text-white text-xs font-mono shadow-2xl flex items-center gap-2"
+            className="fixed top-20 right-4 sm:right-6 z-50 max-w-[calc(100vw-2rem)] px-4 py-2.5 rounded-xl bg-zinc-900 border border-cyan-500/40 text-white text-xs font-mono shadow-2xl flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{notification}</span>
@@ -2364,7 +2364,7 @@ export function AdminDashboard() {
       {/* Main Admin Body */}
       <div className="flex-1 flex flex-col md:flex-row">
         {/* Left Sidebar Navigation */}
-        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-zinc-950/40 p-4 space-y-1 shrink-0">
+        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-zinc-950/40 p-3 sm:p-4 flex flex-row overflow-x-auto md:flex-col gap-1.5 md:space-y-1 shrink-0 scrollbar-none">
           {[
             { id: 'DASHBOARD', label: 'Overview', icon: LayoutDashboard },
             { id: 'PROJECTS', label: 'Projects', icon: FolderGit2, badge: allProjects.length },
@@ -2385,7 +2385,7 @@ export function AdminDashboard() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as AdminTab)}
                 className={[
-                  'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider text-left transition-all cursor-pointer',
+                  'flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider text-left transition-all cursor-pointer whitespace-nowrap shrink-0 md:w-full gap-3',
                   isActive
                     ? 'bg-white text-black font-semibold shadow-lg'
                     : 'text-white/60 hover:text-white hover:bg-white/5',
@@ -2410,7 +2410,7 @@ export function AdminDashboard() {
         </aside>
 
         {/* Right Content Area */}
-        <main className="flex-1 p-6 md:p-10 max-w-5xl">
+        <main className="flex-1 p-4 sm:p-6 md:p-10 max-w-5xl overflow-x-hidden min-w-0">
           {/* TAB 1: DASHBOARD */}
           {activeTab === 'DASHBOARD' && (
             <div className="space-y-8">

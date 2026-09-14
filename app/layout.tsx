@@ -1,7 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="bg-black text-white selection:bg-cyan-500 selection:text-black font-sans">
+      <body className="bg-black text-white selection:bg-cyan-500 selection:text-black font-sans overflow-x-hidden relative w-full min-h-full">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

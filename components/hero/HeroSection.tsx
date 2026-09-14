@@ -45,11 +45,11 @@ export function HeroSection({ isActive }: HeroSectionProps) {
   return (
     <>
       <section
-        className="relative z-20 min-h-screen w-full flex items-center justify-center px-6 sm:px-12 py-24 lg:py-32 max-w-7xl mx-auto"
+        className="relative z-20 min-h-[100dvh] w-full flex items-center justify-center px-4 min-[380px]:px-6 sm:px-12 py-20 sm:py-24 lg:py-32 max-w-7xl mx-auto overflow-hidden"
         aria-label={`Hero — Portfolio of ${personal.fullName}`}
       >
         {/* Asymmetric Grid Composition */}
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
 
           {/* LEFT: Profile Portrait — cinematic reveal with parallax depth (Col 1-5) */}
           <div className="lg:col-span-5 flex justify-center lg:justify-start">
@@ -65,7 +65,7 @@ export function HeroSection({ isActive }: HeroSectionProps) {
               delay: 0.2,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className="lg:col-span-7 space-y-8"
+            className="lg:col-span-7 space-y-6 sm:space-y-8"
           >
             {/* Eyebrow & Name */}
             <div className="space-y-2">
@@ -73,13 +73,13 @@ export function HeroSection({ isActive }: HeroSectionProps) {
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>{personal.greeting}</span>
               </div>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extralight tracking-tight text-white leading-[1.05]">
+              <h1 className="text-3xl min-[380px]:text-4xl sm:text-6xl lg:text-7xl font-extralight tracking-tight text-white leading-[1.05] break-words">
                 {personal.fullName}
               </h1>
             </div>
 
             {/* Role Title & Concise Professional Intro */}
-            <div className="space-y-4 border-l-2 border-white/20 pl-6 py-1">
+            <div className="space-y-4 border-l-2 border-white/20 pl-4 sm:pl-6 py-1">
               <p className="text-base sm:text-lg font-mono text-white/90 tracking-wide">
                 {personal.title}
               </p>

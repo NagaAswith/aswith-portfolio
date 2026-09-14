@@ -259,6 +259,10 @@ export function CoverflowCarousel({
   // Track whether user recently interacted (to give grace period before auto-advance)
   const userInteractedRef = useRef(false);
 
+  // Touch swipe gesture refs
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+
   const total = certificates?.length ?? 0;
 
   // Clamp index when certificate list changes (filter)
@@ -396,6 +400,32 @@ export function CoverflowCarousel({
     setHoveredIndex(null);
   }, []);
 
+  // ── Touch swipe gestures for phone/tablet gesture navigation ──────
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null || touchStartYRef.current === null || total === 0) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartYRef.current;
+
+    // Detect horizontal dominant swipe >= 40px
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      resetAutoTimer();
+      if (deltaX < 0) {
+        // Swiped left -> advance forward
+        setActiveIndex((prev) => (total <= 1 ? 0 : prev === total - 1 ? 0 : prev + 1));
+      } else {
+        // Swiped right -> go back
+        setActiveIndex((prev) => (total <= 1 ? 0 : prev === 0 ? total - 1 : prev - 1));
+      }
+    }
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+  };
+
   // ── Stage click handler ───────────────────────────────────────────────
   const handleCardClick = useCallback(
     (idx: number) => {
@@ -434,29 +464,25 @@ export function CoverflowCarousel({
   const cardTransforms = useMemo(() => {
     if (total === 0) return [];
     const half = Math.floor(total / 2);
-    return certificates.map((_, idx) => {
-      let offset = idx - safeIndex;
+    return certificates.map((_, i) => {
+      let offset = i - safeIndex;
       if (offset < -half) offset += total;
       if (offset > Math.floor((total - 1) / 2)) offset -= total;
 
       const absOffset = Math.abs(offset);
-      const isActive = idx === safeIndex;
-      const isHov = hoveredIndex === idx;
-      const isInspecting = isModalOpen;
+      const isActive = offset === 0;
+      const isHov = hoveredIndex === i;
+      const isInspecting = isModalOpen && isActive;
 
-      // During inspection: recede side cards more dramatically
-      const inspectDepthBoost = isInspecting && !isActive ? -80 : 0;
-
-      const translateX = offset * STEP_X;
-      const translateZ = isActive
-        ? 80
-        : -(absOffset * DEPTH_PER_OFFSET) + inspectDepthBoost;
+      // Symmetrical 3D Coverflow geometry:
       const rotateY = isActive ? 0 : offset < 0 ? ROTATE_Y_PER_SIDE : -ROTATE_Y_PER_SIDE;
+      const translateX = offset * STEP_X;
+      const translateZ = isActive ? 80 : -absOffset * DEPTH_PER_OFFSET;
       const scale = isActive
-        ? isInspecting ? 0.96 : 1.04
+        ? 1.03
         : isHov
-        ? Math.max(0.80, 1 - absOffset * 0.11)
-        : Math.max(0.70, 1 - absOffset * 0.14);
+        ? 0.90
+        : Math.max(0.68, 1 - absOffset * 0.13);
       const opacity = isActive
         ? 1
         : isInspecting
@@ -487,9 +513,11 @@ export function CoverflowCarousel({
         ref={stageRef}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
-        className="relative w-full flex items-center justify-center overflow-visible"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="relative w-full flex items-center justify-center overflow-visible touch-pan-y"
         style={{
-          height: 'clamp(340px, 50vw, 460px)',
+          height: 'clamp(320px, 48vw, 460px)',
           perspective: '1300px',
           isolation: 'isolate',
         }}
@@ -525,12 +553,12 @@ export function CoverflowCarousel({
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
                 contain: 'paint',
-                width: 'clamp(260px, 30vw, 340px)',
-                height: 'clamp(320px, 42vw, 420px)',
+                width: 'clamp(250px, 75vw, 340px)',
+                height: 'clamp(310px, 42vw, 420px)',
                 top: '50%',
                 left: '50%',
-                marginTop: 'calc(clamp(320px, 42vw, 420px) / -2)',
-                marginLeft: 'calc(clamp(260px, 30vw, 340px) / -2)',
+                marginTop: 'calc(clamp(310px, 42vw, 420px) / -2)',
+                marginLeft: 'calc(clamp(250px, 75vw, 340px) / -2)',
                 cursor: t.isActive ? 'default' : 'pointer',
                 pointerEvents: 'auto',
               }}

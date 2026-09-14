@@ -190,7 +190,7 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
           onWheel={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pt-[72px] pb-6 px-4 sm:px-6 md:px-8 bg-black/94 backdrop-blur-3xl overflow-hidden overscroll-contain"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pt-[64px] sm:pt-[72px] pb-4 sm:pb-6 px-3 sm:px-6 md:px-8 bg-black/94 backdrop-blur-3xl overflow-hidden overscroll-contain"
           style={{ touchAction: 'none' }}
           onClick={onClose}
           role="dialog"
@@ -213,14 +213,14 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
             exit={{ scale: 0.95, opacity: 0, y: 12 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             style={{ touchAction: 'pan-y' }}
-            className="relative z-10 w-full max-w-5xl lg:max-w-6xl bg-zinc-950/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-[0_35px_110px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col max-h-[calc(100vh-96px)] text-white overscroll-contain my-auto"
+            className="relative z-10 w-full max-w-5xl lg:max-w-6xl bg-zinc-950/95 backdrop-blur-2xl border border-white/20 rounded-2xl sm:rounded-3xl shadow-[0_35px_110px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col max-h-[calc(100dvh-5rem)] text-white overscroll-contain my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top Sheen Edge Highlight */}
-            <div className="absolute inset-0 rounded-3xl pointer-events-none border border-white/10 bg-gradient-to-b from-white/15 via-transparent to-transparent opacity-60 z-20" />
+            <div className="absolute inset-0 rounded-2xl sm:rounded-3xl pointer-events-none border border-white/10 bg-gradient-to-b from-white/15 via-transparent to-transparent opacity-60 z-20" />
 
             {/* Modal Header Bar */}
-            <div className="flex items-center justify-between px-6 sm:px-8 py-4.5 border-b border-white/10 shrink-0 bg-zinc-950/90 backdrop-blur-md relative z-30">
+            <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 sm:py-4.5 border-b border-white/10 shrink-0 bg-zinc-950/90 backdrop-blur-md relative z-30">
               <div className="flex items-center gap-3">
                 <span className="px-3 py-1 rounded-full text-[11px] font-mono tracking-widest uppercase bg-cyan-950/60 text-cyan-300 border border-cyan-500/30">
                   PROJECT #{project.number}
@@ -241,7 +241,7 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
 
             {/* Isolated Internal Scrollable Main Content Layout */}
             <div
-              className="overflow-y-auto overscroll-contain p-6 sm:p-8 md:p-9 flex-1 relative z-30 space-y-8 focus:outline-none scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent"
+              className="overflow-y-auto overscroll-contain p-4 sm:p-8 md:p-9 flex-1 relative z-30 space-y-6 sm:space-y-8 focus:outline-none scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent"
               style={{ touchAction: 'pan-y' }}
               onWheel={(e) => e.stopPropagation()}
             >

@@ -5,7 +5,9 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useMouseParallax } from './useMouseParallax';
 import { usePerformanceStore } from '@/store/usePerformanceStore';
+import { usePortfolioContent } from '@/store/usePortfolioContent';
 import { personal } from '@/data/personal';
+import { formatImageUrl } from '@/data/assetManifest';
 
 interface ProfilePortraitProps {
   isVisible: boolean;
@@ -23,6 +25,8 @@ export function ProfilePortrait({ isVisible, delay = 0.0 }: ProfilePortraitProps
   const mousePos = useMouseParallax();
   const frameRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePerformanceStore((state) => state.reducedMotion);
+  const media = usePortfolioContent((state) => state.media);
+  const profileImageSrc = formatImageUrl(media?.portrait) || '/media/profile/profile.jpeg';
 
   // Pointer parallax — portrait moves slightly less than card = depth layering
   useEffect(() => {
@@ -68,7 +72,7 @@ export function ProfilePortrait({ isVisible, delay = 0.0 }: ProfilePortraitProps
         <div
           className="relative overflow-hidden"
           style={{
-            width: 'clamp(200px, 24vw, 320px)',
+            width: 'clamp(170px, 45vw, 320px)',
             aspectRatio: '3/4',
             // Thin inner highlight suggests presence in 3D space
             boxShadow: [
@@ -80,7 +84,7 @@ export function ProfilePortrait({ isVisible, delay = 0.0 }: ProfilePortraitProps
           }}
         >
           <Image
-            src="/media/profile/profile.jpeg"
+            src={profileImageSrc}
             alt={`${personal.fullName} — ${personal.roles[0]}`}
             fill
             priority

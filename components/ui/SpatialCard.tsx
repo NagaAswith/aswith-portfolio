@@ -82,7 +82,7 @@ export function SpatialCard({
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         style={{ transformStyle: 'preserve-3d' }}
         className={[
-          'group relative rounded-xl bg-zinc-950/70 backdrop-blur-xl border p-6 sm:p-8 h-full flex flex-col',
+          'group relative rounded-xl bg-zinc-950/70 backdrop-blur-xl border p-4 sm:p-8 h-full flex flex-col',
           'transition-all duration-400 ease-out',
           interactive ? 'hover:bg-zinc-900/80 hover:border-white/30 cursor-pointer' : '',
           depthShadows[depth],

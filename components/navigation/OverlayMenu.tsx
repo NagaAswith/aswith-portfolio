@@ -64,13 +64,13 @@ export function OverlayMenu() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col justify-between p-6 sm:p-12"
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col justify-between p-4 sm:p-12 overflow-y-auto max-h-[100dvh] overscroll-contain"
           role="dialog"
           aria-modal="true"
           aria-label="Navigation Menu"
         >
           {/* Header Bar */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-6">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4 sm:pb-6 shrink-0">
             <span className="font-mono text-xs uppercase tracking-[0.3em] text-white/40">
               NAVIGATION OVERVIEW
             </span>
@@ -84,7 +84,7 @@ export function OverlayMenu() {
           </div>
 
           {/* Menu Columns */}
-          <div className="my-auto py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 sm:gap-16 max-w-6xl w-full mx-auto">
+          <div className="my-auto py-8 sm:py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-16 max-w-6xl w-full mx-auto shrink-0">
             {menuColumns.map((col, colIdx) => (
               <motion.div
                 key={col.title}

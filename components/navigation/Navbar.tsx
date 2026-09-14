@@ -47,7 +47,7 @@ export function Navbar() {
           : 'py-6 bg-transparent border-b border-transparent',
       ].join(' ')}
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-12 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 min-[380px]:px-6 sm:px-12 flex items-center justify-between">
         {/* Left: Brand Logo / Name */}
         <a
           href="#"

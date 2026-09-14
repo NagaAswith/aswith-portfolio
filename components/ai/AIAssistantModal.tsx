@@ -121,14 +121,14 @@ export function AIAssistantModal() {
   return (
     <>
       {/* Floating Assistant Trigger Button */}
-      <div className="fixed bottom-20 sm:bottom-24 right-6 z-40">
+      <div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-40">
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label="Open AI Assistant"
           aria-expanded={isOpen}
-          className="flex items-center gap-2.5 px-4 py-3 rounded-full bg-zinc-900 border border-white/20 text-white shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-xl hover:border-white/40 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          className="flex items-center gap-2.5 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-full bg-zinc-900 border border-white/20 text-white shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-xl hover:border-white/40 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           <div className="p-1.5 rounded-full bg-purple-500/20 text-purple-400">
             <Bot className="w-4 h-4" />
@@ -149,7 +149,7 @@ export function AIAssistantModal() {
             role="dialog"
             aria-modal="true"
             aria-label="Aswith AI Assistant"
-            className="fixed bottom-36 sm:bottom-40 right-6 z-50 w-[calc(100vw-3rem)] max-w-sm sm:max-w-md bg-zinc-950/95 border border-white/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[min(520px,calc(100vh-200px))] backdrop-blur-2xl text-white"
+            className="fixed bottom-36 sm:bottom-40 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm sm:max-w-md bg-zinc-950/95 border border-white/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[min(520px,calc(100dvh-180px))] backdrop-blur-2xl text-white"
           >
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">

@@ -212,7 +212,7 @@ export function SearchPalette({ onTriggerAdminModal }: SearchPaletteProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/80 backdrop-blur-2xl"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-6 sm:pt-20 px-3 sm:px-4 bg-black/80 backdrop-blur-2xl"
           onClick={closeSearch}
         >
           <motion.div
@@ -220,7 +220,7 @@ export function SearchPalette({ onTriggerAdminModal }: SearchPaletteProps) {
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, y: 12, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-2xl bg-zinc-950 border border-white/15 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+            className="w-full max-w-2xl bg-zinc-950 border border-white/15 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85dvh]"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={handleModalKeyDown}
           >

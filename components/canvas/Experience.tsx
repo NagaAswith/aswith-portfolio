@@ -35,7 +35,7 @@ export function Experience() {
 
   return (
     <div
-      className="fixed inset-0 z-0 bg-[#020409] overflow-hidden"
+      className="fixed inset-0 z-0 bg-[#020409] overflow-hidden pointer-events-none"
       style={{
         opacity,
         transition: 'opacity 1.0s cubic-bezier(0.16,1,0.3,1)',

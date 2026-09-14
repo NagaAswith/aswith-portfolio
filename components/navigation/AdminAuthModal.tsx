@@ -78,7 +78,7 @@ export function AdminAuthModal({ isOpen, onClose, onAuthenticated }: AdminAuthMo
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 16, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-md bg-zinc-950 border border-white/20 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 text-white"
+            className="w-full max-w-md bg-zinc-950 border border-white/20 rounded-2xl p-5 sm:p-8 shadow-2xl space-y-6 text-white max-h-[90dvh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

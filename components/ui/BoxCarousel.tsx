@@ -86,14 +86,29 @@ function ProjectImageCover({ project, isActive }: { project: ProjectItem; isActi
 export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
+  // Touch swipe gesture refs
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+
   // Single vs Double click disambiguation timer
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastClickTimeRef = useRef<number>(0);
+
+  // Detect mobile viewport for responsive 3D step distances
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Clamp activeIndex when list updates
   const safeIndex = projects && projects.length > 0 ? Math.min(activeIndex, projects.length - 1) : 0;
@@ -102,6 +117,31 @@ export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
       setActiveIndex(safeIndex);
     }
   }, [projects, activeIndex, safeIndex]);
+
+  // Touch swipe gesture handlers for natural phone/tablet navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null || touchStartYRef.current === null || !projects || projects.length === 0) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartYRef.current;
+
+    // Detect horizontal dominant swipe >= 40px
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      if (deltaX < 0) {
+        // Swiped left -> advance forward
+        setActiveIndex((prev) => (projects.length <= 1 ? 0 : (prev + 1) % projects.length));
+      } else {
+        // Swiped right -> go back
+        setActiveIndex((prev) => (projects.length <= 1 ? 0 : (prev - 1 + projects.length) % projects.length));
+      }
+    }
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+  };
 
   // Preload project images in background
   useEffect(() => {
@@ -155,7 +195,7 @@ export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
       const pointerXRel = clientX - stageCenterX;
 
       // Card horizontal step in 3D Coverflow geometry
-      const stepX = 330;
+      const stepX = isMobile ? 210 : 330;
       const len = projects.length;
 
       let closestIdx: number | null = null;
@@ -197,7 +237,7 @@ export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
         tiltRef.current.style.transform = `rotateX(${rotateXVal}deg) rotateY(${rotateYVal}deg)`;
       }
     });
-  }, [projects, safeIndex, hoveredIndex]);
+  }, [projects, safeIndex, hoveredIndex, isMobile]);
 
   const handleStagePointerLeave = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -252,6 +292,7 @@ export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
   if (!projects || projects.length === 0) return null;
 
   const currentProject = projects[safeIndex];
+  const stepX = isMobile ? 210 : 330;
 
   return (
     <div className="relative w-full py-6 space-y-8">
@@ -260,8 +301,10 @@ export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
         ref={stageRef}
         onPointerMove={handleStagePointerMove}
         onPointerLeave={handleStagePointerLeave}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         onClick={handleStageClick}
-        className="relative w-full flex items-center justify-center h-[480px] sm:h-[510px] overflow-visible px-4 cursor-pointer touch-pan-y"
+        className="relative w-full flex items-center justify-center h-[460px] sm:h-[510px] overflow-visible px-2 sm:px-4 cursor-pointer touch-pan-y"
         style={{
           perspective: '1200px',
           transformStyle: 'preserve-3d',
@@ -285,7 +328,7 @@ export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
 
           // Coverflow 3D Spatial Parameters — Identical Center Target for ALL active cards (translateX = 0)
           const rotateYVal = isActive ? 0 : (offset < 0 ? 30 : -30);
-          const translateX = offset * 330;
+          const translateX = offset * stepX;
           const translateZ = isActive ? 60 : absOffset * -140;
           const scaleVal = isActive ? 1.02 : (isHovered ? 0.92 : Math.max(0.72, 1 - absOffset * 0.14));
           const opacityVal = isActive ? 1 : (isHovered ? 0.95 : Math.max(0.45, 1 - absOffset * 0.22));
@@ -317,7 +360,7 @@ export function BoxCarousel({ projects, onSelectProject }: BoxCarouselProps) {
                 transformStyle: 'preserve-3d',
               }}
               className={[
-                'group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[380px] h-[450px] sm:h-[470px] rounded-2xl cursor-pointer select-none pointer-events-auto',
+                'group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] min-[380px]:w-[320px] sm:w-[380px] h-[430px] sm:h-[470px] rounded-2xl cursor-pointer select-none pointer-events-auto',
                 isActive
                   ? 'bg-zinc-950/85 backdrop-blur-2xl border border-cyan-400/50 shadow-[0_0_45px_-8px_rgba(56,189,248,0.28),0_30px_90px_-20px_rgba(0,0,0,0.95)] hover:border-cyan-300/70'
                   : isHovered
