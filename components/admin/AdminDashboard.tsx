@@ -50,6 +50,7 @@ import { AchievementItem } from '@/data/achievements';
 import { PersonalInfo } from '@/data/personal';
 import { usePortfolioContent } from '@/store/usePortfolioContent';
 import { formatImageUrl } from '@/data/assetManifest';
+import { MediaImportControl } from './MediaImportControl';
 
 type AdminTab =
   | 'DASHBOARD'
@@ -511,22 +512,45 @@ function ProjectEditorModal({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                  <div className="sm:col-span-8 space-y-2">
-                    <input
-                      type="text"
-                      value={form.images?.main || ''}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          images: { ...form.images, main: e.target.value },
-                        })
-                      }
-                      placeholder="/media/projects/project1/main.webp"
-                      className="w-full bg-white/5 border border-white/15 rounded-lg p-2 text-xs font-mono text-white"
+                  <div className="sm:col-span-8 space-y-3">
+                    <MediaImportControl
+                      currentValue={form.images?.main}
+                      targetType="project"
+                      targetId={form.id}
+                      slot="main"
+                      accentColor="cyan"
+                      buttonLabel="Import & Replace"
+                      placeholder="Paste image URL or public Google Drive link..."
+                      onSuccess={(newPath, _publicUrl, allocatedId) => {
+                        setForm((prev) => {
+                          if (!prev) return prev;
+                          return {
+                            ...prev,
+                            id: prev.id || allocatedId || prev.id,
+                            images: {
+                              ...prev.images,
+                              main: newPath,
+                              gallery: prev.images?.gallery || [],
+                            },
+                          };
+                        });
+                      }}
                     />
-                    <p className="text-[11px] text-white/40">
-                      Standard path within <code>public/media/projects/</code>.
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-white/40 uppercase shrink-0">Path:</span>
+                      <input
+                        type="text"
+                        value={form.images?.main || ''}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            images: { ...form.images, main: e.target.value },
+                          })
+                        }
+                        placeholder="/media/projects/project1/main.webp"
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-white/70"
+                      />
+                    </div>
                   </div>
                   <div className="sm:col-span-4">
                     <ImagePreview src={form.images?.main} alt="Main Cover Preview" className="w-full h-24" />
@@ -555,14 +579,32 @@ function ProjectEditorModal({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                      <div className="sm:col-span-8 space-y-2">
-                        <input
-                          type="text"
-                          value={galleryUrl}
-                          onChange={(e) => handleGalleryChange(slotIdx, e.target.value)}
-                          placeholder={`/media/projects/project1/screenshot${slotIdx + 1}.webp`}
-                          className="w-full bg-white/5 border border-white/15 rounded-lg p-2 text-xs font-mono text-white"
+                      <div className="sm:col-span-8 space-y-3">
+                        <MediaImportControl
+                          currentValue={galleryUrl}
+                          targetType="project"
+                          targetId={form.id}
+                          slot={String(slotIdx + 1)}
+                          accentColor="cyan"
+                          buttonLabel="Import & Replace"
+                          placeholder="Paste screenshot URL or public Google Drive link..."
+                          onSuccess={(newPath, _publicUrl, allocatedId) => {
+                            if (allocatedId && !form.id) {
+                              setForm((prev) => (prev ? { ...prev, id: allocatedId } : prev));
+                            }
+                            handleGalleryChange(slotIdx, newPath);
+                          }}
                         />
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-white/40 uppercase shrink-0">Path:</span>
+                          <input
+                            type="text"
+                            value={galleryUrl}
+                            onChange={(e) => handleGalleryChange(slotIdx, e.target.value)}
+                            placeholder={`/media/projects/project1/screenshot${slotIdx + 1}.webp`}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-white/70"
+                          />
+                        </div>
                       </div>
                       <div className="sm:col-span-4">
                         <ImagePreview src={galleryUrl} alt={`Screenshot ${slotIdx + 1}`} className="w-full h-20" />
@@ -888,18 +930,41 @@ function CertificateEditorModal({
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="font-mono text-white/50 block">CREDENTIAL / CERTIFICATE IMAGE PATH</label>
+          <div className="space-y-2">
+            <label className="font-mono text-white/50 block">CREDENTIAL / CERTIFICATE IMAGE</label>
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-              <input
-                type="text"
-                value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
-                placeholder="/media/certificates/certificate1/nptl.jpeg"
-                className="sm:col-span-8 bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white focus:border-emerald-400 focus:outline-none"
-              />
+              <div className="sm:col-span-8 space-y-2">
+                <MediaImportControl
+                  currentValue={form.image}
+                  targetType="certificate"
+                  targetId={form.id}
+                  accentColor="emerald"
+                  buttonLabel="Import & Replace"
+                  placeholder="Paste certificate image URL or public Google Drive link..."
+                  onSuccess={(newPath, _publicUrl, allocatedId) => {
+                    setForm((prev) => {
+                      if (!prev) return prev;
+                      return {
+                        ...prev,
+                        id: prev.id || allocatedId || prev.id,
+                        image: newPath,
+                      };
+                    });
+                  }}
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-white/40 uppercase shrink-0">Path:</span>
+                  <input
+                    type="text"
+                    value={form.image}
+                    onChange={(e) => setForm({ ...form, image: e.target.value })}
+                    placeholder="/media/certificates/certificate1/nptl.jpeg"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-white/70 focus:border-emerald-400 focus:outline-none"
+                  />
+                </div>
+              </div>
               <div className="sm:col-span-4">
-                <ImagePreview src={form.image} alt={form.title} className="w-full h-16" />
+                <ImagePreview src={form.image} alt={form.title} className="w-full h-20" />
               </div>
             </div>
           </div>
@@ -3067,8 +3132,26 @@ export function AdminDashboard() {
               </div>
 
               <div className="p-6 rounded-2xl bg-zinc-950 border border-white/10 space-y-5">
+                <div className="space-y-3">
+                  <label className="text-xs font-mono uppercase tracking-wider text-white/50">
+                    IMPORT RESUME (DIRECT PDF URL OR GOOGLE DRIVE)
+                  </label>
+                  <MediaImportControl
+                    currentValue={resumePath}
+                    targetType="resume"
+                    accentColor="cyan"
+                    buttonLabel="Import & Save PDF"
+                    placeholder="Paste direct PDF URL or public Google Drive PDF link..."
+                    onSuccess={(newPath) => {
+                      setResumePath(newPath);
+                      updateResume(newPath);
+                      notify('Resume PDF imported and saved successfully.');
+                    }}
+                  />
+                </div>
+
                 <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-white/50">RESUME URL / PATH</label>
+                  <label className="text-xs font-mono uppercase tracking-wider text-white/50">AUTHORITATIVE RESUME PATH</label>
                   <input
                     type="text"
                     value={resumePath}
@@ -3366,14 +3449,33 @@ export function AdminDashboard() {
               <div className="space-y-4">
                 {/* Profile Portrait */}
                 <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-3">
-                  <h4 className="text-sm font-semibold text-white">Profile Portrait</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                    <input
-                      type="text"
-                      value={mediaForm.portrait}
-                      onChange={(e) => setMediaForm({ ...mediaForm, portrait: e.target.value })}
-                      className="sm:col-span-9 bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
-                    />
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-white">Profile Portrait</h4>
+                    <span className="text-[11px] font-mono text-cyan-400">Hero &amp; Personal Identity</span>
+                  </div>
+                  <MediaImportControl
+                    currentValue={mediaForm.portrait}
+                    targetType="profile"
+                    accentColor="cyan"
+                    buttonLabel="Import & Replace Portrait"
+                    placeholder="Paste image URL or public Google Drive link..."
+                    onSuccess={(newPath) => {
+                      const updated = { ...mediaForm, portrait: newPath };
+                      setMediaForm(updated);
+                      updateMedia(updated);
+                      notify('Profile portrait updated and saved successfully.');
+                    }}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-1">
+                    <div className="sm:col-span-9 space-y-1">
+                      <span className="text-[10px] font-mono text-white/40 uppercase">Storage Path</span>
+                      <input
+                        type="text"
+                        value={mediaForm.portrait}
+                        onChange={(e) => setMediaForm({ ...mediaForm, portrait: e.target.value })}
+                        className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
+                      />
+                    </div>
                     <div className="sm:col-span-3">
                       <ImagePreview src={mediaForm.portrait} alt="Portrait" className="w-20 h-20 rounded-full mx-auto" />
                     </div>
@@ -3382,15 +3484,55 @@ export function AdminDashboard() {
 
                 {/* Self-Intro Video */}
                 <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-3">
-                  <h4 className="text-sm font-semibold text-white">Self-Introduction Video</h4>
-                  <input
-                    type="text"
-                    value={mediaForm.selfIntroVideo}
-                    onChange={(e) => setMediaForm({ ...mediaForm, selfIntroVideo: e.target.value })}
-                    className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-white">Self-Introduction Video</h4>
+                    <span className="text-[11px] font-mono text-cyan-400">About Me Modal</span>
+                  </div>
+                  <MediaImportControl
+                    currentValue={mediaForm.selfIntroVideo}
+                    targetType="selfintro"
+                    accentColor="cyan"
+                    buttonLabel="Import & Replace Video"
+                    placeholder="Paste video URL (MP4) or public Google Drive link..."
+                    onSuccess={(newPath) => {
+                      const updated = { ...mediaForm, selfIntroVideo: newPath };
+                      setMediaForm(updated);
+                      updateMedia(updated);
+                      notify('Self-introduction video updated and saved successfully.');
+                    }}
+                  />
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] font-mono text-white/40 uppercase">Storage Path</span>
+                    <input
+                      type="text"
+                      value={mediaForm.selfIntroVideo}
+                      onChange={(e) => setMediaForm({ ...mediaForm, selfIntroVideo: e.target.value })}
+                      className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
+                    />
+                    <p className="text-[11px] font-mono text-white/40">
+                      Played when visitor triggers the &ldquo;About Me&rdquo; hero action button.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Main Intro Sequence Video */}
+                <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-white">Main Intro Sequence Video</h4>
+                    <span className="text-[11px] font-mono text-purple-400">Hero Pre-loader Sequence</span>
+                  </div>
+                  <MediaImportControl
+                    currentValue="/media/intro/intro-video.mp4"
+                    targetType="intro"
+                    accentColor="purple"
+                    buttonLabel="Import & Replace Intro Video"
+                    placeholder="Paste intro MP4 URL or public Google Drive link..."
+                    onSuccess={() => {
+                      notify('Main intro video updated and deployed to storage successfully.');
+                    }}
                   />
                   <p className="text-[11px] font-mono text-white/40">
-                    Played when visitor triggers the &ldquo;About Me&rdquo; hero action button.
+                    Authoritative intro video container stored at <code>/media/intro/intro-video.mp4</code>.
                   </p>
                 </div>
 

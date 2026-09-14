@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, Lock, X, KeyRound, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ShieldAlert, Lock, X, KeyRound, CheckCircle2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface AdminAuthModalProps {
@@ -13,12 +13,14 @@ interface AdminAuthModalProps {
 
 export function AdminAuthModal({ isOpen, onClose, onAuthenticated }: AdminAuthModalProps) {
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<'IDLE' | 'AUTHENTICATING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   const handleClose = () => {
     setPassword('');
+    setShowPassword(false);
     setStatus('IDLE');
     setErrorMessage('');
     onClose();
@@ -125,13 +127,26 @@ export function AdminAuthModal({ isOpen, onClose, onAuthenticated }: AdminAuthMo
                   <div className="relative">
                     <Lock className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter admin passkey..."
-                      className="w-full bg-white/5 border border-white/15 rounded-xl pl-10 pr-4 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/40"
+                      className="w-full bg-white/5 border border-white/15 rounded-xl pl-10 pr-11 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/40"
                       autoFocus
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide admin passkey' : 'Show admin passkey'}
+                      title={showPassword ? 'Hide admin passkey' : 'Show admin passkey'}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors p-1 rounded-md focus:outline-none focus:ring-1 focus:ring-white/40 cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
