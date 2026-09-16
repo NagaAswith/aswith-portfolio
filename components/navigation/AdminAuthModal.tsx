@@ -26,6 +26,13 @@ export function AdminAuthModal({ isOpen, onClose, onAuthenticated }: AdminAuthMo
     onClose();
   };
 
+  // Prefetch admin route when modal opens so bundle and RSC payload are primed
+  React.useEffect(() => {
+    if (isOpen) {
+      router.prefetch('/admin');
+    }
+  }, [isOpen, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password.trim()) return;
@@ -44,14 +51,18 @@ export function AdminAuthModal({ isOpen, onClose, onAuthenticated }: AdminAuthMo
 
       if (data.success) {
         setStatus('SUCCESS');
-        setTimeout(() => {
-          handleClose();
-          if (onAuthenticated) {
+        // Initiate navigation immediately without blocking on delay
+        if (onAuthenticated) {
+          setTimeout(() => {
+            handleClose();
             onAuthenticated();
-          } else {
-            router.push('/admin');
-          }
-        }, 600);
+          }, 300);
+        } else {
+          router.push('/admin');
+          setTimeout(() => {
+            handleClose();
+          }, 300);
+        }
       } else {
         setStatus('ERROR');
         setErrorMessage(data.error || 'Invalid credentials. Please verify your admin passkey.');

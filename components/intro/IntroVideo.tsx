@@ -18,44 +18,55 @@ export function IntroVideo() {
     }
   }, [isMuted]);
 
-  // Attempt playback on mount — unmuted first, fall back to muted if blocked
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Try unmuted autoplay first (isMuted defaults to false in store)
-    video.muted = false;
-
-    video
-      .play()
-      .then(() => {
-        // Autoplay with audio succeeded — keep unmuted
-      })
-      .catch((err: unknown) => {
-        // Browser autoplay policy blocked audio.
-        // Retry with muted — this is always permitted.
-        const name =
-          err instanceof Error ? err.name : typeof err === 'string' ? err : '';
-        if (
-          name === 'NotAllowedError' ||
-          name === 'AbortError' ||
-          String(err).toLowerCase().includes('autoplay')
-        ) {
-          setMuted(true);
-          video.muted = true;
-          video.play().catch((retryErr: unknown) => {
-            console.warn('Intro video: playback unavailable.', retryErr);
-          });
-        } else {
-          console.warn('Intro video: play error:', err);
-        }
-      });
-  }, [setMuted]);
-
   // Handle actual video ended event or error — the only valid signal to show Enter the World
   const handleEnded = useCallback(() => {
     setIntroState('MESSAGE_READY');
   }, [setIntroState]);
+
+  // Attempt playback on mount with robust mobile and desktop handling
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Ensure muted state is active on mount for mobile autoplay compliance
+    video.muted = isMuted;
+
+    const startPlayback = async () => {
+      try {
+        await video.play();
+
+        // Check if on mobile device
+        const isMobile =
+          typeof navigator !== 'undefined' &&
+          /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (!isMobile && !isMuted) {
+          // On desktop, attempt unmuting if policy allows
+          video.muted = false;
+          video.play().catch(() => {
+            // Audio blocked on desktop; retain muted
+            video.muted = true;
+            setMuted(true);
+          });
+        } else if (isMobile && !isMuted) {
+          // On mobile, retain muted by default per OS policy
+          setMuted(true);
+        }
+      } catch (err: unknown) {
+        // Browser autoplay policy blocked initial attempt.
+        // Fall back to strictly muted playback.
+        setMuted(true);
+        video.muted = true;
+        video.play().catch((retryErr: unknown) => {
+          console.warn('Intro video: playback unavailable, activating fallback.', retryErr);
+          // Video cannot play (e.g. low power mode) — transition immediately to message ready
+          handleEnded();
+        });
+      }
+    };
+
+    startPlayback();
+  }, [isMuted, setMuted, handleEnded]);
 
   // Failsafe: if video fails to load/play or stalls, ensure the experience does not hang indefinitely on black screen
   useEffect(() => {
@@ -100,8 +111,8 @@ export function IntroVideo() {
         src={resolveSupabaseMediaUrl('intro/intro-video.mp4')}
         autoPlay
         playsInline
+        muted
         disablePictureInPicture
-        // muted controlled imperatively via useEffect to allow audio autoplay
         preload="auto"
         onEnded={handleEnded}
         onError={handleEnded}
