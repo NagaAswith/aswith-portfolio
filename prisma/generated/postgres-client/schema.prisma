@@ -8,11 +8,11 @@ generator client {
 }
 
 model Project {
-  id               String   @id
-  slug             String   @unique
-  number           String   @default("01")
-  displayOrder     Int      @default(0)
-  isPublished      Boolean  @default(true)
+  id               String  @id
+  slug             String  @unique
+  number           String  @default("01")
+  displayOrder     Int     @default(0)
+  isPublished      Boolean @default(true)
   title            String
   category         String
   categories       String
@@ -23,13 +23,15 @@ model Project {
   technologies     String
   features         String
   mainImage        String
+  videoUrl         String?
   liveUrl          String?
-  githubUrl        String?
-  year             String
-  status           String
-  featured         Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+
+  githubUrl String?
+  year      String
+  status    String
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   galleryImages ProjectGalleryImage[]
 }

@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
-import { StorageProvider, StorageUploadResult } from './index';
+import { StorageProvider, StorageUploadResult, StorageUploadType } from './index';
+
 import { formatImageUrl } from '@/lib/assetEngine';
 import { validateFileBuffer } from './fileValidator';
 import { env } from '@/lib/env';
@@ -39,10 +40,11 @@ export class LocalStorageProvider implements StorageProvider {
   async uploadFile(
     fileBuffer: Buffer,
     originalName: string,
-    type: 'certificate' | 'project' | 'profile',
+    type: StorageUploadType,
     targetId: string = '',
     slot: string = ''
   ): Promise<StorageUploadResult> {
+
     const sanitizedOriginalName = this.sanitizeFilename(originalName);
 
     // 1. Extension & Header Validation
@@ -69,10 +71,17 @@ export class LocalStorageProvider implements StorageProvider {
       const numStr = targetId.replace(/[^0-9]/g, '') || '1';
       targetFolder = `project${numStr}`;
       relativeSubdir = path.join('media', 'projects', targetFolder);
+    } else if (type === 'intro') {
+      targetFolder = 'intro';
+      relativeSubdir = path.join('media', 'intro');
+    } else if (type === 'selfintro') {
+      targetFolder = 'selfintro';
+      relativeSubdir = path.join('media', 'selfintro');
     } else {
       targetFolder = 'profile';
       relativeSubdir = path.join('media', 'profile');
     }
+
 
     const targetSubdirAbs = this.getSafePath(relativeSubdir);
 
@@ -115,9 +124,14 @@ export class LocalStorageProvider implements StorageProvider {
       rawPath = `/media/certificates/${targetFolder}/${finalFileName}`;
     } else if (type === 'project') {
       rawPath = `/media/projects/${targetFolder}/${finalFileName}`;
+    } else if (type === 'intro') {
+      rawPath = `/media/intro/${finalFileName}`;
+    } else if (type === 'selfintro') {
+      rawPath = `/media/selfintro/${finalFileName}`;
     } else {
       rawPath = `/media/profile/${finalFileName}`;
     }
+
 
     const url = formatImageUrl(rawPath);
 
@@ -164,9 +178,10 @@ class ActiveStorageProviderProxy implements StorageProvider {
   private getProvider(): StorageProvider {
     return cloudStorageProvider;
   }
-  uploadFile(fileBuffer: Buffer, originalName: string, type: 'certificate' | 'project' | 'profile', targetId?: string, slot?: string) {
+  uploadFile(fileBuffer: Buffer, originalName: string, type: StorageUploadType, targetId?: string, slot?: string) {
     return this.getProvider().uploadFile(fileBuffer, originalName, type, targetId, slot);
   }
+
   deleteFile(rawPath: string) {
     return this.getProvider().deleteFile(rawPath);
   }

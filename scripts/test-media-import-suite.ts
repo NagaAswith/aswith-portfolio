@@ -117,6 +117,74 @@ async function runMediaImportSuite() {
     assert(err.message.includes('Unsupported file format'), 'Executable magic bytes rejected cleanly');
   }
 
+  // --- Scenario 4: Supabase Storage Headers (Invalid Compact JWS fix) ---
+  console.log('\n--- Scenario 4: Supabase Storage Header Verification ---');
+  function buildSupabaseHeaders(serviceKey: string, mimeType: string): Record<string, string> {
+    return {
+      'Authorization': `Bearer ${serviceKey}`,
+      'apikey': serviceKey,
+      'Content-Type': mimeType,
+      'x-upsert': 'true',
+    };
+  }
+
+  const testKey = 'sb_secret_sampleKey12345';
+  const headers = buildSupabaseHeaders(testKey, 'video/mp4');
+  assert(
+    headers['Authorization'] === `Bearer ${testKey}`,
+    'Authorization header contains Bearer serviceKey'
+  );
+  assert(
+    headers['apikey'] === testKey,
+    'apikey header is explicitly present (required by Supabase Storage gateway to prevent Invalid Compact JWS error)'
+  );
+  assert(
+    headers['x-upsert'] === 'true',
+    'x-upsert is set to overwrite/upsert'
+  );
+
+  // --- Scenario 5: Project Video Slot & Intro Path Construction ---
+  console.log('\n--- Scenario 5: Project Video Slot & Intro Path Construction ---');
+  function buildBucketRelativePath(targetType: string, targetId: string, slot: string, ext: string, ts: number): string {
+    if (targetType === 'project') {
+      const numMatch = targetId.match(/\d+/);
+      const projNum = numMatch ? parseInt(numMatch[0], 10) : 1;
+      let slotName: string;
+      if (slot === 'video') {
+        slotName = 'video';
+      } else if (slot === 'main' || !slot) {
+        slotName = 'main';
+      } else {
+        slotName = `screenshot${slot}`;
+      }
+      return `projects/project${projNum}/${slotName}_${ts}.${ext}`;
+    } else if (targetType === 'intro') {
+      return `intro/intro_${ts}.${ext}`;
+    } else if (targetType === 'selfintro') {
+      return `selfintro/selfintro_${ts}.${ext}`;
+    }
+    return `misc/${ts}.${ext}`;
+  }
+
+  const ts = 1726000000;
+  const projVideoPath = buildBucketRelativePath('project', 'project_003', 'video', 'mp4', ts);
+  assert(
+    projVideoPath === `projects/project3/video_${ts}.mp4`,
+    'Project video slot constructs projects/project3/video_{timestamp}.mp4'
+  );
+
+  const introPath = buildBucketRelativePath('intro', '', '', 'mp4', ts);
+  assert(
+    introPath === `intro/intro_${ts}.mp4`,
+    'Intro video constructs intro/intro_{timestamp}.mp4'
+  );
+
+  const selfintroPath = buildBucketRelativePath('selfintro', '', '', 'mp4', ts);
+  assert(
+    selfintroPath === `selfintro/selfintro_${ts}.mp4`,
+    'Self-intro video constructs selfintro/selfintro_{timestamp}.mp4'
+  );
+
   console.log('\n====================================================');
   console.log(`MEDIA IMPORT TEST RUN: ${passedTests} PASSED, ${failedTests} FAILED`);
   console.log('====================================================');

@@ -11,10 +11,12 @@ import { resolveSupabaseMediaUrl } from './storage/supabaseMedia';
 const defaultMediaConfig: MediaConfig = {
   portrait: resolveSupabaseMediaUrl('/media/profile/profile.jpeg'),
   selfIntroVideo: resolveSupabaseMediaUrl('/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4'),
+  introVideo: '/media/intro/intro-video.mp4',
   resumePdf: '/media/resume.pdf',
   projectsMediaDir: 'public/media/projects/',
   certificatesMediaDir: 'public/media/certificates/',
 };
+
 
 function safeJsonParse<T>(jsonString: string | null | undefined, fallback: T): T {
   if (!jsonString) return fallback;
@@ -70,7 +72,9 @@ export async function fetchFullAdminData() {
       main: resolveSupabaseMediaUrl(p.mainImage),
       gallery: p.galleryImages.map((g) => resolveSupabaseMediaUrl(g.imageUrl)),
     },
+    videoUrl: p.videoUrl ? resolveSupabaseMediaUrl(p.videoUrl) : undefined,
     liveUrl: p.liveUrl || undefined,
+
     githubUrl: p.githubUrl || undefined,
     year: p.year,
     status: p.status,

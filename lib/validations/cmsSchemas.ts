@@ -31,7 +31,9 @@ export const ProjectItemSchema = z.object({
     })
     .optional(),
   image: z.string().optional(),
+  videoUrl: z.string().nullable().optional(), // Optional project video URL
   liveUrl: z.string().nullable().optional(),
+
   githubUrl: z.string().nullable().optional(),
   year: z.string().optional(),
   status: z.string().optional(),

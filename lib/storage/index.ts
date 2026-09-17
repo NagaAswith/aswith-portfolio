@@ -7,11 +7,13 @@ export interface StorageUploadResult {
   mimeType?: string;
 }
 
+export type StorageUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro';
+
 export interface StorageProvider {
   uploadFile(
     fileBuffer: Buffer,
     originalName: string,
-    type: 'certificate' | 'project' | 'profile',
+    type: StorageUploadType,
     targetId?: string,
     slot?: string
   ): Promise<StorageUploadResult>;
@@ -19,3 +21,4 @@ export interface StorageProvider {
   exists(rawPath: string): Promise<boolean>;
   getPublicUrl(rawPath: string): string;
 }
+

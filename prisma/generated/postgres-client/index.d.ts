@@ -1688,6 +1688,7 @@ export namespace Prisma {
     technologies: string | null
     features: string | null
     mainImage: string | null
+    videoUrl: string | null
     liveUrl: string | null
     githubUrl: string | null
     year: string | null
@@ -1713,6 +1714,7 @@ export namespace Prisma {
     technologies: string | null
     features: string | null
     mainImage: string | null
+    videoUrl: string | null
     liveUrl: string | null
     githubUrl: string | null
     year: string | null
@@ -1738,6 +1740,7 @@ export namespace Prisma {
     technologies: number
     features: number
     mainImage: number
+    videoUrl: number
     liveUrl: number
     githubUrl: number
     year: number
@@ -1773,6 +1776,7 @@ export namespace Prisma {
     technologies?: true
     features?: true
     mainImage?: true
+    videoUrl?: true
     liveUrl?: true
     githubUrl?: true
     year?: true
@@ -1798,6 +1802,7 @@ export namespace Prisma {
     technologies?: true
     features?: true
     mainImage?: true
+    videoUrl?: true
     liveUrl?: true
     githubUrl?: true
     year?: true
@@ -1823,6 +1828,7 @@ export namespace Prisma {
     technologies?: true
     features?: true
     mainImage?: true
+    videoUrl?: true
     liveUrl?: true
     githubUrl?: true
     year?: true
@@ -1935,6 +1941,7 @@ export namespace Prisma {
     technologies: string
     features: string
     mainImage: string
+    videoUrl: string | null
     liveUrl: string | null
     githubUrl: string | null
     year: string
@@ -1979,6 +1986,7 @@ export namespace Prisma {
     technologies?: boolean
     features?: boolean
     mainImage?: boolean
+    videoUrl?: boolean
     liveUrl?: boolean
     githubUrl?: boolean
     year?: boolean
@@ -2006,6 +2014,7 @@ export namespace Prisma {
     technologies?: boolean
     features?: boolean
     mainImage?: boolean
+    videoUrl?: boolean
     liveUrl?: boolean
     githubUrl?: boolean
     year?: boolean
@@ -2031,6 +2040,7 @@ export namespace Prisma {
     technologies?: boolean
     features?: boolean
     mainImage?: boolean
+    videoUrl?: boolean
     liveUrl?: boolean
     githubUrl?: boolean
     year?: boolean
@@ -2056,6 +2066,7 @@ export namespace Prisma {
     technologies?: boolean
     features?: boolean
     mainImage?: boolean
+    videoUrl?: boolean
     liveUrl?: boolean
     githubUrl?: boolean
     year?: boolean
@@ -2065,7 +2076,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "number" | "displayOrder" | "isPublished" | "title" | "category" | "categories" | "domain" | "organization" | "shortDescription" | "fullDescription" | "technologies" | "features" | "mainImage" | "liveUrl" | "githubUrl" | "year" | "status" | "featured" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
+  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "number" | "displayOrder" | "isPublished" | "title" | "category" | "categories" | "domain" | "organization" | "shortDescription" | "fullDescription" | "technologies" | "features" | "mainImage" | "videoUrl" | "liveUrl" | "githubUrl" | "year" | "status" | "featured" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     galleryImages?: boolean | Project$galleryImagesArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
@@ -2094,6 +2105,7 @@ export namespace Prisma {
       technologies: string
       features: string
       mainImage: string
+      videoUrl: string | null
       liveUrl: string | null
       githubUrl: string | null
       year: string
@@ -2540,6 +2552,7 @@ export namespace Prisma {
     readonly technologies: FieldRef<"Project", 'String'>
     readonly features: FieldRef<"Project", 'String'>
     readonly mainImage: FieldRef<"Project", 'String'>
+    readonly videoUrl: FieldRef<"Project", 'String'>
     readonly liveUrl: FieldRef<"Project", 'String'>
     readonly githubUrl: FieldRef<"Project", 'String'>
     readonly year: FieldRef<"Project", 'String'>
@@ -11816,6 +11829,7 @@ export namespace Prisma {
     technologies: 'technologies',
     features: 'features',
     mainImage: 'mainImage',
+    videoUrl: 'videoUrl',
     liveUrl: 'liveUrl',
     githubUrl: 'githubUrl',
     year: 'year',
@@ -12071,6 +12085,7 @@ export namespace Prisma {
     technologies?: StringFilter<"Project"> | string
     features?: StringFilter<"Project"> | string
     mainImage?: StringFilter<"Project"> | string
+    videoUrl?: StringNullableFilter<"Project"> | string | null
     liveUrl?: StringNullableFilter<"Project"> | string | null
     githubUrl?: StringNullableFilter<"Project"> | string | null
     year?: StringFilter<"Project"> | string
@@ -12097,6 +12112,7 @@ export namespace Prisma {
     technologies?: SortOrder
     features?: SortOrder
     mainImage?: SortOrder
+    videoUrl?: SortOrderInput | SortOrder
     liveUrl?: SortOrderInput | SortOrder
     githubUrl?: SortOrderInput | SortOrder
     year?: SortOrder
@@ -12126,6 +12142,7 @@ export namespace Prisma {
     technologies?: StringFilter<"Project"> | string
     features?: StringFilter<"Project"> | string
     mainImage?: StringFilter<"Project"> | string
+    videoUrl?: StringNullableFilter<"Project"> | string | null
     liveUrl?: StringNullableFilter<"Project"> | string | null
     githubUrl?: StringNullableFilter<"Project"> | string | null
     year?: StringFilter<"Project"> | string
@@ -12152,6 +12169,7 @@ export namespace Prisma {
     technologies?: SortOrder
     features?: SortOrder
     mainImage?: SortOrder
+    videoUrl?: SortOrderInput | SortOrder
     liveUrl?: SortOrderInput | SortOrder
     githubUrl?: SortOrderInput | SortOrder
     year?: SortOrder
@@ -12185,6 +12203,7 @@ export namespace Prisma {
     technologies?: StringWithAggregatesFilter<"Project"> | string
     features?: StringWithAggregatesFilter<"Project"> | string
     mainImage?: StringWithAggregatesFilter<"Project"> | string
+    videoUrl?: StringNullableWithAggregatesFilter<"Project"> | string | null
     liveUrl?: StringNullableWithAggregatesFilter<"Project"> | string | null
     githubUrl?: StringNullableWithAggregatesFilter<"Project"> | string | null
     year?: StringWithAggregatesFilter<"Project"> | string
@@ -12846,6 +12865,7 @@ export namespace Prisma {
     technologies: string
     features: string
     mainImage: string
+    videoUrl?: string | null
     liveUrl?: string | null
     githubUrl?: string | null
     year: string
@@ -12872,6 +12892,7 @@ export namespace Prisma {
     technologies: string
     features: string
     mainImage: string
+    videoUrl?: string | null
     liveUrl?: string | null
     githubUrl?: string | null
     year: string
@@ -12898,6 +12919,7 @@ export namespace Prisma {
     technologies?: StringFieldUpdateOperationsInput | string
     features?: StringFieldUpdateOperationsInput | string
     mainImage?: StringFieldUpdateOperationsInput | string
+    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     liveUrl?: NullableStringFieldUpdateOperationsInput | string | null
     githubUrl?: NullableStringFieldUpdateOperationsInput | string | null
     year?: StringFieldUpdateOperationsInput | string
@@ -12924,6 +12946,7 @@ export namespace Prisma {
     technologies?: StringFieldUpdateOperationsInput | string
     features?: StringFieldUpdateOperationsInput | string
     mainImage?: StringFieldUpdateOperationsInput | string
+    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     liveUrl?: NullableStringFieldUpdateOperationsInput | string | null
     githubUrl?: NullableStringFieldUpdateOperationsInput | string | null
     year?: StringFieldUpdateOperationsInput | string
@@ -12950,6 +12973,7 @@ export namespace Prisma {
     technologies: string
     features: string
     mainImage: string
+    videoUrl?: string | null
     liveUrl?: string | null
     githubUrl?: string | null
     year: string
@@ -12975,6 +12999,7 @@ export namespace Prisma {
     technologies?: StringFieldUpdateOperationsInput | string
     features?: StringFieldUpdateOperationsInput | string
     mainImage?: StringFieldUpdateOperationsInput | string
+    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     liveUrl?: NullableStringFieldUpdateOperationsInput | string | null
     githubUrl?: NullableStringFieldUpdateOperationsInput | string | null
     year?: StringFieldUpdateOperationsInput | string
@@ -13000,6 +13025,7 @@ export namespace Prisma {
     technologies?: StringFieldUpdateOperationsInput | string
     features?: StringFieldUpdateOperationsInput | string
     mainImage?: StringFieldUpdateOperationsInput | string
+    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     liveUrl?: NullableStringFieldUpdateOperationsInput | string | null
     githubUrl?: NullableStringFieldUpdateOperationsInput | string | null
     year?: StringFieldUpdateOperationsInput | string
@@ -13831,6 +13857,7 @@ export namespace Prisma {
     technologies?: SortOrder
     features?: SortOrder
     mainImage?: SortOrder
+    videoUrl?: SortOrder
     liveUrl?: SortOrder
     githubUrl?: SortOrder
     year?: SortOrder
@@ -13860,6 +13887,7 @@ export namespace Prisma {
     technologies?: SortOrder
     features?: SortOrder
     mainImage?: SortOrder
+    videoUrl?: SortOrder
     liveUrl?: SortOrder
     githubUrl?: SortOrder
     year?: SortOrder
@@ -13885,6 +13913,7 @@ export namespace Prisma {
     technologies?: SortOrder
     features?: SortOrder
     mainImage?: SortOrder
+    videoUrl?: SortOrder
     liveUrl?: SortOrder
     githubUrl?: SortOrder
     year?: SortOrder
@@ -14635,6 +14664,7 @@ export namespace Prisma {
     technologies: string
     features: string
     mainImage: string
+    videoUrl?: string | null
     liveUrl?: string | null
     githubUrl?: string | null
     year: string
@@ -14660,6 +14690,7 @@ export namespace Prisma {
     technologies: string
     features: string
     mainImage: string
+    videoUrl?: string | null
     liveUrl?: string | null
     githubUrl?: string | null
     year: string
@@ -14701,6 +14732,7 @@ export namespace Prisma {
     technologies?: StringFieldUpdateOperationsInput | string
     features?: StringFieldUpdateOperationsInput | string
     mainImage?: StringFieldUpdateOperationsInput | string
+    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     liveUrl?: NullableStringFieldUpdateOperationsInput | string | null
     githubUrl?: NullableStringFieldUpdateOperationsInput | string | null
     year?: StringFieldUpdateOperationsInput | string
@@ -14726,6 +14758,7 @@ export namespace Prisma {
     technologies?: StringFieldUpdateOperationsInput | string
     features?: StringFieldUpdateOperationsInput | string
     mainImage?: StringFieldUpdateOperationsInput | string
+    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     liveUrl?: NullableStringFieldUpdateOperationsInput | string | null
     githubUrl?: NullableStringFieldUpdateOperationsInput | string | null
     year?: StringFieldUpdateOperationsInput | string

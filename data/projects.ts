@@ -19,7 +19,9 @@ export interface ProjectItem {
   technologies: string[];
   features: string[];
   images: ProjectImages;
+  videoUrl?: string; // Optional project video (local upload or import)
   liveUrl?: string;
+
   githubUrl?: string;
   year: string;
   status: string;

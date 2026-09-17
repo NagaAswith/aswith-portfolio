@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { StorageProvider, StorageUploadResult } from './index';
+import { StorageProvider, StorageUploadResult, StorageUploadType } from './index';
+
 import { LocalStorageProvider } from './localStorage';
 import { env } from '@/lib/env';
 import { validateFileBuffer } from './fileValidator';
@@ -65,25 +66,30 @@ export class S3StorageProvider implements StorageProvider {
   async uploadFile(
     fileBuffer: Buffer,
     originalName: string,
-    type: 'certificate' | 'project' | 'profile',
+    type: StorageUploadType,
     targetId: string = '',
     slot: string = ''
   ): Promise<StorageUploadResult> {
+    // Determine if this is a video upload
+    const isVideo = type === 'intro' || type === 'selfintro' || slot === 'video';
+    const validationCategory = isVideo ? 'video' : 'image';
+
     // Header & Size Validation
-    const validation = validateFileBuffer(fileBuffer, originalName, 'image');
+    const validation = validateFileBuffer(fileBuffer, originalName, validationCategory);
     if (!validation.valid) {
       throw new Error(validation.error || 'Invalid file header or unsupported format.');
     }
 
-    const maxBytes = env.maxImageUploadMb * 1024 * 1024;
+    const maxBytes = (isVideo ? env.maxVideoUploadMb : env.maxImageUploadMb) * 1024 * 1024;
     if (fileBuffer.length > maxBytes) {
-      throw new Error(`File size (${(fileBuffer.length / (1024 * 1024)).toFixed(2)} MB) exceeds maximum allowed limit of ${env.maxImageUploadMb} MB.`);
+      throw new Error(`File size (${(fileBuffer.length / (1024 * 1024)).toFixed(2)} MB) exceeds maximum allowed limit of ${isVideo ? env.maxVideoUploadMb : env.maxImageUploadMb} MB.`);
     }
 
     if (!this.isConfigured || !this.client) {
       // Fall back cleanly to LocalStorageProvider for local environments
       return this.fallbackProvider.uploadFile(fileBuffer, originalName, type, targetId, slot);
     }
+
 
     const sanitizedName = originalName.replace(/[^a-zA-Z0-9_.-]/g, '_');
     const key = `media/${type}s/${targetId ? targetId + '/' : ''}${sanitizedName}`;

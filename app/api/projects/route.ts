@@ -48,7 +48,9 @@ export async function GET(req: Request) {
         main: resolveSupabaseMediaUrl(p.mainImage),
         gallery: p.galleryImages.map((g) => resolveSupabaseMediaUrl(g.imageUrl)),
       },
+      videoUrl: p.videoUrl ? resolveSupabaseMediaUrl(p.videoUrl) : undefined,
       liveUrl: p.liveUrl || undefined,
+
       githubUrl: p.githubUrl || undefined,
       year: p.year,
       status: p.status,

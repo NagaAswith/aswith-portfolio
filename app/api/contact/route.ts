@@ -60,7 +60,25 @@ function sanitizeText(str: string): string {
 }
 
 /**
+ * Escape special HTML characters to safely embed user content in Telegram HTML mode.
+ * Telegram HTML mode only requires escaping: & < >
+ * See: https://core.telegram.org/bots/api#html-style
+ *
+ * This is the ROOT CAUSE fix: previously using parse_mode:'Markdown' caused delivery
+ * failures when user content contained Markdown special chars (e.g. _ in email addresses).
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
  * Send message via Telegram Bot API.
+ * Uses HTML parse_mode to avoid Markdown special-character parsing failures
+ * (e.g. underscores in email addresses causing Telegram 400 errors).
+ * Includes AbortController timeout to prevent hanging serverless functions.
  * Returns true if delivery was confirmed by Telegram.
  */
 async function sendViaTelegram(params: {
@@ -78,17 +96,27 @@ async function sendViaTelegram(params: {
     return false;
   }
 
+  // HTML-escape all user-supplied values to prevent Telegram parse errors
+  const safeName = escapeHtml(params.name);
+  const safeEmail = escapeHtml(params.email);
+  const safePhone = escapeHtml(params.phone);
+  const safeMessage = escapeHtml(params.message);
+  const safeTimestamp = escapeHtml(params.timestamp);
+
   const text = [
-    '🔔 *New Portfolio Contact*',
+    '🔔 <b>New Portfolio Contact</b>',
     '',
-    `*Name:* ${params.name}`,
-    `*Email:* ${params.email}`,
-    `*Contact:* ${params.phone}`,
-    `*Message:*`,
-    `${params.message}`,
+    `<b>Name:</b> ${safeName}`,
+    `<b>Email:</b> ${safeEmail}`,
+    `<b>Contact:</b> ${safePhone}`,
+    '<b>Message:</b>',
+    safeMessage,
     '',
-    `*Timestamp:* ${params.timestamp}`,
+    `<b>Timestamp:</b> ${safeTimestamp}`,
   ].join('\n');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
   try {
     const res = await fetch(
@@ -99,8 +127,9 @@ async function sendViaTelegram(params: {
         body: JSON.stringify({
           chat_id: chatId,
           text,
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
         }),
+        signal: controller.signal,
       }
     );
 
@@ -110,16 +139,28 @@ async function sendViaTelegram(params: {
         console.log('[ContactForm] Telegram delivery confirmed.');
         return true;
       }
-      console.error('[ContactForm] Telegram API returned ok:false:', data);
+      // Telegram returned ok:false — log description class without exposing secrets
+      const errCode = data.error_code ?? 'unknown';
+      const errDesc = data.description ?? 'No description';
+      console.error(`[ContactForm] Telegram API returned ok:false — code:${errCode} description:"${errDesc}"`);
       return false;
     }
 
-    const errData = await res.json().catch(() => ({}));
-    console.error('[ContactForm] Telegram API HTTP error:', res.status, errData);
+    let errData: Record<string, unknown> = {};
+    try { errData = await res.json(); } catch { /* ignore */ }
+    const errCode = (errData.error_code as number) ?? res.status;
+    const errDesc = (errData.description as string) ?? res.statusText;
+    console.error(`[ContactForm] Telegram API HTTP error — status:${errCode} description:"${errDesc}"`);
     return false;
-  } catch (err) {
-    console.error('[ContactForm] Failed to reach Telegram API:', err);
+  } catch (err: unknown) {
+    if ((err as Error)?.name === 'AbortError') {
+      console.error('[ContactForm] Telegram API request timed out after 15s.');
+    } else {
+      console.error('[ContactForm] Failed to reach Telegram API:', (err as Error)?.message ?? String(err));
+    }
     return false;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -138,6 +179,9 @@ async function sendViaResend(params: {
 
   const toEmail = process.env.CONTACT_TO_EMAIL || 'nagaaswith3@gmail.com';
   const fromEmail = process.env.CONTACT_FROM_EMAIL || 'onboarding@resend.dev';
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -165,18 +209,26 @@ async function sendViaResend(params: {
           </div>
         `,
       }),
+      signal: controller.signal,
     });
 
     if (res.ok) {
       console.log('[ContactForm] Resend email delivery confirmed.');
       return true;
     }
-    const errData = await res.json().catch(() => ({}));
-    console.error('[ContactForm] Resend API error:', errData);
+    let errData: Record<string, unknown> = {};
+    try { errData = await res.json(); } catch { /* ignore */ }
+    console.error('[ContactForm] Resend API error — status:', res.status, 'name:', errData.name ?? 'unknown');
     return false;
-  } catch (err) {
-    console.error('[ContactForm] Failed to reach Resend API:', err);
+  } catch (err: unknown) {
+    if ((err as Error)?.name === 'AbortError') {
+      console.error('[ContactForm] Resend API request timed out after 10s.');
+    } else {
+      console.error('[ContactForm] Failed to reach Resend API:', (err as Error)?.message ?? String(err));
+    }
     return false;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

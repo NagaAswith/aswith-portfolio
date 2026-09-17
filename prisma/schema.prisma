@@ -22,7 +22,9 @@ model Project {
   technologies     String
   features         String
   mainImage        String
+  videoUrl         String?
   liveUrl          String?
+
   githubUrl        String?
   year             String
   status           String

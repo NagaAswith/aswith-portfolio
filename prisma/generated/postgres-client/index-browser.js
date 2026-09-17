@@ -136,6 +136,7 @@ exports.Prisma.ProjectScalarFieldEnum = {
   technologies: 'technologies',
   features: 'features',
   mainImage: 'mainImage',
+  videoUrl: 'videoUrl',
   liveUrl: 'liveUrl',
   githubUrl: 'githubUrl',
   year: 'year',

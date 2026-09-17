@@ -51,6 +51,8 @@ import { PersonalInfo } from '@/data/personal';
 import { usePortfolioContent } from '@/store/usePortfolioContent';
 import { formatImageUrl } from '@/data/assetManifest';
 import { MediaImportControl } from './MediaImportControl';
+import { MediaFileUpload } from './MediaFileUpload';
+
 
 type AdminTab =
   | 'DASHBOARD'
@@ -211,7 +213,8 @@ function ProjectEditorModal({
 }) {
   const [form, setForm] = useState<ProjectItem | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<'CARD' | 'GALLERY' | 'DETAIL' | 'LINKS'>('CARD');
+  const [activeSubTab, setActiveSubTab] = useState<'CARD' | 'GALLERY' | 'DETAIL' | 'LINKS' | 'MEDIA'>('CARD');
+
 
   // Input state for new tag / highlight
   const [newHighlight, setNewHighlight] = useState('');
@@ -326,17 +329,18 @@ function ProjectEditorModal({
         )}
 
         {/* Sub-Tab Navigation Bar */}
-        <div className="flex items-center gap-2 px-6 border-b border-white/10 bg-zinc-950 shrink-0 text-xs font-mono">
+        <div className="flex items-center gap-2 px-6 border-b border-white/10 bg-zinc-950 shrink-0 text-xs font-mono overflow-x-auto">
           {[
             { id: 'CARD', label: '1. Card Overview' },
             { id: 'GALLERY', label: '2. 4-Slot Gallery' },
             { id: 'DETAIL', label: '3. Detail & Architecture' },
             { id: 'LINKS', label: '4. External Links & Repo' },
+            { id: 'MEDIA', label: '5. Project Video' },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id as typeof activeSubTab)}
-              className={`py-3 px-3 border-b-2 font-medium transition-colors cursor-pointer ${
+              className={`py-3 px-3 border-b-2 font-medium transition-colors cursor-pointer whitespace-nowrap ${
                 activeSubTab === tab.id
                   ? 'border-cyan-400 text-cyan-400'
                   : 'border-transparent text-white/50 hover:text-white'
@@ -346,6 +350,7 @@ function ProjectEditorModal({
             </button>
           ))}
         </div>
+
 
         {/* Editor Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
@@ -616,7 +621,100 @@ function ProjectEditorModal({
             </div>
           )}
 
-          {/* SUBTAB 3: FULL DETAIL PAGE CONTENT */}
+          {/* SUBTAB 5: PROJECT VIDEO */}
+          {activeSubTab === 'MEDIA' && (
+            <div className="space-y-5">
+              <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs text-purple-300">
+                Attach an optional video to this project. Accepted formats: MP4, WebM, MOV, M4V (max 100 MB).
+                The video will be associated with this project's permanent ID folder.
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-purple-400 font-medium">Project Video</span>
+                  {form.videoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, videoUrl: undefined })}
+                      className="text-[10px] font-mono text-red-400 hover:text-red-300"
+                    >
+                      Clear Video
+                    </button>
+                  )}
+                </div>
+
+                {/* Direct File Upload */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                  {form.id ? (
+                    <MediaFileUpload
+                      targetType="project"
+                      targetId={form.id}
+                      slot="video"
+                      mediaCategory="video"
+                      accentColor="purple"
+                      buttonLabel="Upload Project Video"
+                      onSuccess={(newPath) => {
+                        setForm((prev) => prev ? { ...prev, videoUrl: newPath } : prev);
+                      }}
+                    />
+                  ) : (
+                    <p className="text-[11px] font-mono text-amber-400/70">
+                      ⚠ Save the project first to assign a permanent ID before uploading video.
+                    </p>
+                  )}
+                </div>
+
+                {/* URL / Google Drive Import */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                  <MediaImportControl
+                    currentValue={form.videoUrl}
+                    targetType="project"
+                    targetId={form.id}
+                    slot="video"
+                    accentColor="purple"
+                    buttonLabel="Import Video"
+                    placeholder="Paste MP4 URL or public Google Drive video link..."
+                    onSuccess={(newPath, _publicUrl, allocatedId) => {
+                      setForm((prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          id: prev.id || allocatedId || prev.id,
+                          videoUrl: newPath,
+                        };
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* Path display */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-white/40 uppercase shrink-0">Video Path:</span>
+                  <input
+                    type="text"
+                    value={form.videoUrl || ''}
+                    onChange={(e) => setForm({ ...form, videoUrl: e.target.value || undefined })}
+                    placeholder="/media/projects/project1/video.mp4"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-white/70"
+                  />
+                </div>
+
+                {/* Current video preview */}
+                {form.videoUrl && (
+                  <video
+                    src={form.videoUrl}
+                    controls
+                    muted
+                    className="w-full max-h-48 rounded-xl object-contain bg-black border border-white/10"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+
           {activeSubTab === 'DETAIL' && (
             <div className="space-y-6">
               {/* Full System Architecture Overview */}
@@ -3488,19 +3586,42 @@ export function AdminDashboard() {
                     <h4 className="text-sm font-semibold text-white">Self-Introduction Video</h4>
                     <span className="text-[11px] font-mono text-cyan-400">About Me Modal</span>
                   </div>
-                  <MediaImportControl
-                    currentValue={mediaForm.selfIntroVideo}
-                    targetType="selfintro"
-                    accentColor="cyan"
-                    buttonLabel="Import & Replace Video"
-                    placeholder="Paste video URL (MP4) or public Google Drive link..."
-                    onSuccess={(newPath) => {
-                      const updated = { ...mediaForm, selfIntroVideo: newPath };
-                      setMediaForm(updated);
-                      updateMedia(updated);
-                      notify('Self-introduction video updated and saved successfully.');
-                    }}
-                  />
+
+                  {/* Direct File Upload */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                    <MediaFileUpload
+                      targetType="selfintro"
+                      mediaCategory="video"
+                      accentColor="cyan"
+                      buttonLabel="Upload Self-Intro Video"
+                      onSuccess={(newPath) => {
+                        const updated = { ...mediaForm, selfIntroVideo: newPath };
+                        setMediaForm(updated);
+                        updateMedia(updated);
+                        notify('Self-introduction video uploaded and saved successfully.');
+                      }}
+                    />
+                  </div>
+
+                  {/* Remote URL / Google Drive Import */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                    <MediaImportControl
+                      currentValue={mediaForm.selfIntroVideo}
+                      targetType="selfintro"
+                      accentColor="cyan"
+                      buttonLabel="Import & Replace Video"
+                      placeholder="Paste video URL (MP4) or public Google Drive link..."
+                      onSuccess={(newPath) => {
+                        const updated = { ...mediaForm, selfIntroVideo: newPath };
+                        setMediaForm(updated);
+                        updateMedia(updated);
+                        notify('Self-introduction video updated and saved successfully.');
+                      }}
+                    />
+                  </div>
+
                   <div className="space-y-1 pt-1">
                     <span className="text-[10px] font-mono text-white/40 uppercase">Storage Path</span>
                     <input
@@ -3521,19 +3642,54 @@ export function AdminDashboard() {
                     <h4 className="text-sm font-semibold text-white">Main Intro Sequence Video</h4>
                     <span className="text-[11px] font-mono text-purple-400">Hero Pre-loader Sequence</span>
                   </div>
-                  <MediaImportControl
-                    currentValue="/media/intro/intro-video.mp4"
-                    targetType="intro"
-                    accentColor="purple"
-                    buttonLabel="Import & Replace Intro Video"
-                    placeholder="Paste intro MP4 URL or public Google Drive link..."
-                    onSuccess={() => {
-                      notify('Main intro video updated and deployed to storage successfully.');
-                    }}
-                  />
-                  <p className="text-[11px] font-mono text-white/40">
-                    Authoritative intro video container stored at <code>/media/intro/intro-video.mp4</code>.
-                  </p>
+
+                  {/* Direct File Upload */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                    <MediaFileUpload
+                      targetType="intro"
+                      mediaCategory="video"
+                      accentColor="purple"
+                      buttonLabel="Upload Intro Video"
+                      onSuccess={(newPath) => {
+                        const updated = { ...mediaForm, introVideo: newPath };
+                        setMediaForm(updated);
+                        updateMedia(updated);
+                        notify('Main intro video uploaded and deployed successfully.');
+                      }}
+                    />
+                  </div>
+
+                  {/* Remote URL / Google Drive Import */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                    <MediaImportControl
+                      currentValue={mediaForm.introVideo || '/media/intro/intro-video.mp4'}
+                      targetType="intro"
+                      accentColor="purple"
+                      buttonLabel="Import & Replace Intro Video"
+                      placeholder="Paste intro MP4 URL or public Google Drive link..."
+                      onSuccess={(newPath) => {
+                        const updated = { ...mediaForm, introVideo: newPath };
+                        setMediaForm(updated);
+                        updateMedia(updated);
+                        notify('Main intro video updated and deployed to storage successfully.');
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] font-mono text-white/40 uppercase">Storage Path</span>
+                    <input
+                      type="text"
+                      value={mediaForm.introVideo || '/media/intro/intro-video.mp4'}
+                      onChange={(e) => setMediaForm({ ...mediaForm, introVideo: e.target.value })}
+                      className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
+                    />
+                    <p className="text-[11px] font-mono text-white/40">
+                      Authoritative intro video container stored at <code>{mediaForm.introVideo || '/media/intro/intro-video.mp4'}</code>.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Media Directories */}

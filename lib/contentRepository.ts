@@ -8,6 +8,7 @@ import { personal, PersonalInfo } from '@/data/personal';
 export interface MediaConfig {
   portrait: string;
   selfIntroVideo: string;
+  introVideo: string; // Main hero pre-loader intro video path
   resumePdf: string;
   projectsMediaDir: string;
   certificatesMediaDir: string;
@@ -16,10 +17,12 @@ export interface MediaConfig {
 const defaultMediaConfig: MediaConfig = {
   portrait: '/media/profile/profile.jpeg',
   selfIntroVideo: '/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4',
+  introVideo: '/media/intro/intro-video.mp4',
   resumePdf: '/media/resume.pdf',
   projectsMediaDir: 'public/media/projects/',
   certificatesMediaDir: 'public/media/certificates/',
 };
+
 
 const STORAGE_KEYS = {
   PROJECTS: 'portfolio_cms_projects_v2',
@@ -837,6 +840,7 @@ class ContentRepositoryImpl {
     }
     this.saveToStorage();
     this.notify();
+    this.syncToApi('personal', 'UPDATE', { ...this.personal, media: this.media });
     return { ...this.media };
   }
 

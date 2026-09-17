@@ -124,7 +124,9 @@ export async function POST(req: Request) {
               technologies: JSON.stringify(item.technologies || []),
               features: JSON.stringify(item.features || []),
               mainImage: item.images?.main || item.image || '',
+              videoUrl: item.videoUrl || null,
               liveUrl: item.liveUrl || null,
+
               githubUrl: item.githubUrl || null,
               year: item.year || String(new Date().getFullYear()),
               status: item.status || 'Active',
@@ -245,7 +247,9 @@ export async function POST(req: Request) {
           if (item.technologies !== undefined) updateData.technologies = JSON.stringify(item.technologies);
           if (item.features !== undefined) updateData.features = JSON.stringify(item.features);
           if (item.images?.main !== undefined) updateData.mainImage = item.images.main;
+          if (item.videoUrl !== undefined) updateData.videoUrl = item.videoUrl || null;
           if (item.liveUrl !== undefined) updateData.liveUrl = item.liveUrl;
+
           if (item.githubUrl !== undefined) updateData.githubUrl = item.githubUrl;
           if (item.year !== undefined) updateData.year = item.year;
           if (item.status !== undefined) updateData.status = item.status;

@@ -408,10 +408,14 @@ export async function uploadToStorage(
       .join('/');
     const uploadEndpoint = `${supabaseUrl}/storage/v1/object/${SUPABASE_MEDIA_BUCKET}/${encodedKey}`;
 
+    // FIX: Supabase Storage REST API requires BOTH 'Authorization: Bearer' AND 'apikey' headers
+    // when using an sb_secret_* key. Without 'apikey', the gateway tries to parse the bearer
+    // token as a JWT (JWS) and returns HTTP 400 with 'Invalid Compact JWS' error.
     const res = await fetch(uploadEndpoint, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${serviceKey}`,
+        'Authorization': `Bearer ${serviceKey}`,
+        'apikey': serviceKey,
         'Content-Type': mimeType,
         'x-upsert': 'true',
       },
@@ -420,7 +424,9 @@ export async function uploadToStorage(
 
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(`Supabase storage upload failed (HTTP ${res.status}): ${errText}`);
+      // Sanitize error: do not re-throw the raw serviceKey or bucket path in user-facing errors
+      const sanitized = errText.replace(serviceKey, '[REDACTED]');
+      throw new Error(`Supabase storage upload failed (HTTP ${res.status}): ${sanitized}`);
     }
   }
 
@@ -481,7 +487,15 @@ export async function importMediaFromUrl(options: MediaImportOptions): Promise<M
   if (targetType === 'project') {
     const numMatch = targetId.match(/\d+/);
     const projNum = numMatch ? parseInt(numMatch[0], 10) : 1;
-    const slotName = slot === 'main' || !slot ? 'main' : `screenshot${slot}`;
+    // Slot 'video' stores as video.ext, 'main'/'' as main.ext, otherwise screenshotN.ext
+    let slotName: string;
+    if (slot === 'video') {
+      slotName = 'video';
+    } else if (slot === 'main' || !slot) {
+      slotName = 'main';
+    } else {
+      slotName = `screenshot${slot}`;
+    }
     bucketRelativePath = `projects/project${projNum}/${slotName}_${timestamp}.${fileTypeInfo.extension}`;
   } else if (targetType === 'certificate') {
     const numMatch = targetId.match(/\d+/);
@@ -510,7 +524,13 @@ export async function importMediaFromUrl(options: MediaImportOptions): Promise<M
       const existingProject = await db.project.findUnique({ where: { id: targetId } });
       if (existingProject) {
         await db.$transaction(async (tx) => {
-          if (slot === 'main' || !slot) {
+          if (slot === 'video') {
+            // Project video field
+            await tx.project.update({
+              where: { id: targetId },
+              data: { videoUrl: storedPath } as Parameters<typeof tx.project.update>[0]['data'],
+            });
+          } else if (slot === 'main' || !slot) {
             await tx.project.update({
               where: { id: targetId },
               data: { mainImage: storedPath },
@@ -558,6 +578,20 @@ export async function importMediaFromUrl(options: MediaImportOptions): Promise<M
           mediaObj = JSON.parse(personal.media);
         } catch {}
         mediaObj.portrait = storedPath;
+        await db.personalInfo.update({
+          where: { id: 'default' },
+          data: { media: JSON.stringify(mediaObj) },
+        });
+      }
+    } else if (targetType === 'intro') {
+      // Update PersonalInfo.media JSON blob with the new intro video path
+      const personal = await db.personalInfo.findUnique({ where: { id: 'default' } });
+      if (personal) {
+        let mediaObj: Record<string, any> = {};
+        try {
+          mediaObj = JSON.parse(personal.media);
+        } catch {}
+        mediaObj.introVideo = storedPath;
         await db.personalInfo.update({
           where: { id: 'default' },
           data: { media: JSON.stringify(mediaObj) },
