@@ -115,53 +115,60 @@ async function sendViaTelegram(params: {
     `<b>Timestamp:</b> ${safeTimestamp}`,
   ].join('\n');
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  // Attempt up to 2 times in case of transient network connection reset
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-  try {
-    const res = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          parse_mode: 'HTML',
-        }),
-        signal: controller.signal,
-      }
-    );
+    try {
+      const res = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'HTML',
+          }),
+          signal: controller.signal,
+        }
+      );
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.ok) {
-        console.log('[ContactForm] Telegram delivery confirmed.');
-        return true;
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) {
+          console.log('[ContactForm] Telegram delivery confirmed.');
+          return true;
+        }
+        // Telegram returned ok:false — log description class without exposing secrets
+        const errCode = data.error_code ?? 'unknown';
+        const errDesc = data.description ?? 'No description';
+        console.error(`[ContactForm] Telegram API returned ok:false — code:${errCode} description:"${errDesc}"`);
+        return false;
       }
-      // Telegram returned ok:false — log description class without exposing secrets
-      const errCode = data.error_code ?? 'unknown';
-      const errDesc = data.description ?? 'No description';
-      console.error(`[ContactForm] Telegram API returned ok:false — code:${errCode} description:"${errDesc}"`);
+
+      let errData: Record<string, unknown> = {};
+      try { errData = await res.json(); } catch { /* ignore */ }
+      const errCode = (errData.error_code as number) ?? res.status;
+      const errDesc = (errData.description as string) ?? res.statusText;
+      console.error(`[ContactForm] Telegram API HTTP error — status:${errCode} description:"${errDesc}"`);
       return false;
+    } catch (err: unknown) {
+      if ((err as Error)?.name === 'AbortError') {
+        console.error('[ContactForm] Telegram API request timed out after 15s.');
+      } else {
+        console.error(`[ContactForm] Failed to reach Telegram API (attempt ${attempt}/2):`, (err as Error)?.message ?? String(err));
+      }
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    let errData: Record<string, unknown> = {};
-    try { errData = await res.json(); } catch { /* ignore */ }
-    const errCode = (errData.error_code as number) ?? res.status;
-    const errDesc = (errData.description as string) ?? res.statusText;
-    console.error(`[ContactForm] Telegram API HTTP error — status:${errCode} description:"${errDesc}"`);
-    return false;
-  } catch (err: unknown) {
-    if ((err as Error)?.name === 'AbortError') {
-      console.error('[ContactForm] Telegram API request timed out after 15s.');
-    } else {
-      console.error('[ContactForm] Failed to reach Telegram API:', (err as Error)?.message ?? String(err));
-    }
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  return false;
 }
 
 /**

@@ -76,7 +76,13 @@ export function AIAssistantModal() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: query }),
+        body: JSON.stringify({
+          message: query,
+          history: messages.slice(-10).map((m) => ({
+            sender: m.sender,
+            text: m.text,
+          })),
+        }),
       });
       const data: ChatAPIResponse = await res.json();
       const replyText = data.reply || 'I can answer questions about Aswith\'s projects, skills, and experience.';
