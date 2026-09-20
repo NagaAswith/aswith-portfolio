@@ -10,6 +10,8 @@ import { apiErrorResponse } from '@/lib/apiError';
 import { logger } from '@/lib/logger';
 import { allocatePermanentId } from '@/lib/permanentId';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const data = await fetchFullAdminData();

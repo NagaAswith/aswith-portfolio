@@ -3636,11 +3636,11 @@ export function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Main Intro Sequence Video */}
+                {/* Desktop / Laptop Intro Video */}
                 <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-white">Main Intro Sequence Video</h4>
-                    <span className="text-[11px] font-mono text-purple-400">Hero Pre-loader Sequence</span>
+                    <h4 className="text-sm font-semibold text-white">Desktop / Laptop Intro Video</h4>
+                    <span className="text-[11px] font-mono text-purple-400">Desktop Sequence (16:9)</span>
                   </div>
 
                   {/* Direct File Upload */}
@@ -3650,12 +3650,12 @@ export function AdminDashboard() {
                       targetType="intro"
                       mediaCategory="video"
                       accentColor="purple"
-                      buttonLabel="Upload Intro Video"
+                      buttonLabel="Upload Desktop Intro Video"
                       onSuccess={(newPath) => {
                         const updated = { ...mediaForm, introVideo: newPath };
                         setMediaForm(updated);
                         updateMedia(updated);
-                        notify('Main intro video uploaded and deployed successfully.');
+                        notify('Desktop intro video uploaded and deployed successfully.');
                       }}
                     />
                   </div>
@@ -3667,13 +3667,13 @@ export function AdminDashboard() {
                       currentValue={mediaForm.introVideo || '/media/intro/intro-video.mp4'}
                       targetType="intro"
                       accentColor="purple"
-                      buttonLabel="Import & Replace Intro Video"
-                      placeholder="Paste intro MP4 URL or public Google Drive link..."
+                      buttonLabel="Import & Replace Desktop Video"
+                      placeholder="Paste desktop intro MP4 URL or public Google Drive link..."
                       onSuccess={(newPath) => {
                         const updated = { ...mediaForm, introVideo: newPath };
                         setMediaForm(updated);
                         updateMedia(updated);
-                        notify('Main intro video updated and deployed to storage successfully.');
+                        notify('Desktop intro video updated and deployed to storage successfully.');
                       }}
                     />
                   </div>
@@ -3687,7 +3687,63 @@ export function AdminDashboard() {
                       className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
                     />
                     <p className="text-[11px] font-mono text-white/40">
-                      Authoritative intro video container stored at <code>{mediaForm.introVideo || '/media/intro/intro-video.mp4'}</code>.
+                      Authoritative desktop intro video container stored at <code>{mediaForm.introVideo || '/media/intro/intro-video.mp4'}</code>.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Mobile Intro Video */}
+                <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-white">Mobile Intro Video</h4>
+                    <span className="text-[11px] font-mono text-purple-400">Mobile Sequence (9:16 Portrait)</span>
+                  </div>
+
+                  {/* Direct File Upload */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                    <MediaFileUpload
+                      targetType="mobileintro"
+                      mediaCategory="video"
+                      accentColor="purple"
+                      buttonLabel="Upload Mobile Intro Video"
+                      onSuccess={(newPath) => {
+                        const updated = { ...mediaForm, mobileIntroVideo: newPath };
+                        setMediaForm(updated);
+                        updateMedia(updated);
+                        notify('Mobile intro video uploaded and deployed successfully.');
+                      }}
+                    />
+                  </div>
+
+                  {/* Remote URL / Google Drive Import */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                    <MediaImportControl
+                      currentValue={mediaForm.mobileIntroVideo || '/media/mobileintro/Mobileintro.mp4'}
+                      targetType="mobileintro"
+                      accentColor="purple"
+                      buttonLabel="Import & Replace Mobile Video"
+                      placeholder="Paste mobile intro MP4 URL or public Google Drive link..."
+                      onSuccess={(newPath) => {
+                        const updated = { ...mediaForm, mobileIntroVideo: newPath };
+                        setMediaForm(updated);
+                        updateMedia(updated);
+                        notify('Mobile intro video updated and deployed to storage successfully.');
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] font-mono text-white/40 uppercase">Storage Path</span>
+                    <input
+                      type="text"
+                      value={mediaForm.mobileIntroVideo || '/media/mobileintro/Mobileintro.mp4'}
+                      onChange={(e) => setMediaForm({ ...mediaForm, mobileIntroVideo: e.target.value })}
+                      className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
+                    />
+                    <p className="text-[11px] font-mono text-white/40">
+                      Authoritative mobile intro video container stored at <code>{mediaForm.mobileIntroVideo || '/media/mobileintro/Mobileintro.mp4'}</code>.
                     </p>
                   </div>
                 </div>

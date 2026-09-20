@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useIntroStore } from '@/store/useIntroStore';
+import { usePortfolioContent } from '@/store/usePortfolioContent';
 import { resolveSupabaseMediaUrl } from '@/lib/storage/supabaseMedia';
 
 export function IntroVideo() {
@@ -10,6 +11,45 @@ export function IntroVideo() {
   const isMuted = useIntroStore((state) => state.isMuted);
   const setMuted = useIntroStore((state) => state.setMuted);
   const setIntroState = useIntroStore((state) => state.setIntroState);
+
+  // Authoritative CMS media mappings
+  const media = usePortfolioContent((state) => state.media);
+  const desktopVideoUrl = resolveSupabaseMediaUrl(
+    media?.introVideo || '/media/intro/intro-video.mp4'
+  );
+  const mobileVideoUrl = resolveSupabaseMediaUrl(
+    media?.mobileIntroVideo || '/media/mobileintro/Mobileintro.mp4'
+  );
+
+  // Responsive device/orientation detection (mobile portrait vs desktop/landscape)
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return (
+        window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches ||
+        (window.innerWidth <= 768 && window.innerHeight > window.innerWidth)
+      );
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(max-width: 768px) and (orientation: portrait)');
+    const updateOrientation = () => {
+      setIsMobile(
+        mql.matches || (window.innerWidth <= 768 && window.innerHeight > window.innerWidth)
+      );
+    };
+    updateOrientation();
+    mql.addEventListener('change', updateOrientation);
+    window.addEventListener('resize', updateOrientation);
+    return () => {
+      mql.removeEventListener('change', updateOrientation);
+      window.removeEventListener('resize', updateOrientation);
+    };
+  }, []);
+
+  const activeVideoUrl = isMobile ? mobileVideoUrl : desktopVideoUrl;
 
   // Sync muted state to video element imperatively — avoids re-renders
   useEffect(() => {
@@ -36,11 +76,11 @@ export function IntroVideo() {
         await video.play();
 
         // Check if on mobile device
-        const isMobile =
+        const isMobileDevice =
           typeof navigator !== 'undefined' &&
           /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        if (!isMobile && !isMuted) {
+        if (!isMobileDevice && !isMuted) {
           // On desktop, attempt unmuting if policy allows
           video.muted = false;
           video.play().catch(() => {
@@ -48,7 +88,7 @@ export function IntroVideo() {
             video.muted = true;
             setMuted(true);
           });
-        } else if (isMobile && !isMuted) {
+        } else if (isMobileDevice && !isMuted) {
           // On mobile, retain muted by default per OS policy
           setMuted(true);
         }
@@ -66,7 +106,7 @@ export function IntroVideo() {
     };
 
     startPlayback();
-  }, [isMuted, setMuted, handleEnded]);
+  }, [activeVideoUrl, isMuted, setMuted, handleEnded]);
 
   // Failsafe: if video fails to load/play or stalls, ensure the experience does not hang indefinitely on black screen
   useEffect(() => {
@@ -91,6 +131,9 @@ export function IntroVideo() {
   // Once fully in portfolio, remove video from DOM entirely
   if (introState === 'PORTFOLIO_ACTIVE') return null;
 
+  const resolvedSource = activeVideoUrl;
+  const handlePlaybackError = handleEnded;
+
   return (
     <div
       className="absolute inset-0 z-10 overflow-hidden bg-black"
@@ -108,14 +151,19 @@ export function IntroVideo() {
     >
       <video
         ref={videoRef}
-        src={resolveSupabaseMediaUrl('intro/intro-video.mp4')}
+        key={resolvedSource}
+        src={resolvedSource}
+        data-testid="intro-video-element"
+        data-active-source={resolvedSource}
+        data-viewport-mode={isMobile ? 'mobile' : 'desktop'}
         autoPlay
         playsInline
+        webkit-playsinline="true"
         muted
         disablePictureInPicture
         preload="auto"
         onEnded={handleEnded}
-        onError={handleEnded}
+        onError={handlePlaybackError}
         // no loop — stays on final frame after ended
         style={{
           width: '100%',
@@ -124,7 +172,11 @@ export function IntroVideo() {
           objectPosition: 'center',
           display: 'block',
         }}
-      />
+      >
+        <source media="(max-width: 768px) and (orientation: portrait)" src={mobileVideoUrl} type="video/mp4" />
+        <source media="(min-width: 769px), (orientation: landscape)" src={desktopVideoUrl} type="video/mp4" />
+        <source src={desktopVideoUrl} type="video/mp4" />
+      </video>
       {/* Very subtle bottom gradient — only for readability of message text above */}
       <div
         className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none"
@@ -135,3 +187,4 @@ export function IntroVideo() {
     </div>
   );
 }
+

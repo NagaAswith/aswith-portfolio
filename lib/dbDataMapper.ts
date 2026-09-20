@@ -11,7 +11,8 @@ import { resolveSupabaseMediaUrl } from './storage/supabaseMedia';
 const defaultMediaConfig: MediaConfig = {
   portrait: resolveSupabaseMediaUrl('/media/profile/profile.jpeg'),
   selfIntroVideo: resolveSupabaseMediaUrl('/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4'),
-  introVideo: '/media/intro/intro-video.mp4',
+  introVideo: resolveSupabaseMediaUrl('/media/intro/intro-video.mp4'),
+  mobileIntroVideo: resolveSupabaseMediaUrl('/media/mobileintro/Mobileintro.mp4'),
   resumePdf: '/media/resume.pdf',
   projectsMediaDir: 'public/media/projects/',
   certificatesMediaDir: 'public/media/certificates/',
@@ -182,6 +183,8 @@ export async function fetchFullAdminData() {
     ...rawMedia,
     portrait: resolveSupabaseMediaUrl(rawMedia.portrait),
     selfIntroVideo: resolveSupabaseMediaUrl(rawMedia.selfIntroVideo),
+    introVideo: resolveSupabaseMediaUrl(rawMedia.introVideo || defaultMediaConfig.introVideo),
+    mobileIntroVideo: resolveSupabaseMediaUrl(rawMedia.mobileIntroVideo || defaultMediaConfig.mobileIntroVideo),
   };
 
   return {

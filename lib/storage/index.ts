@@ -7,7 +7,7 @@ export interface StorageUploadResult {
   mimeType?: string;
 }
 
-export type StorageUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro';
+export type StorageUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro' | 'mobileintro';
 
 export interface StorageProvider {
   uploadFile(
@@ -22,3 +22,4 @@ export interface StorageProvider {
   getPublicUrl(rawPath: string): string;
 }
 
+export { resolveSupabaseMediaUrl, SUPABASE_MEDIA_BUCKET } from './supabaseMedia';

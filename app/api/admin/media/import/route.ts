@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { isAuthenticatedAdmin } from '@/lib/adminAuth';
 import { validateCsrfOrigin } from '@/lib/csrf';
 import { rateLimiter, getClientIp } from '@/lib/rateLimit';
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const validTypes = ['project', 'certificate', 'profile', 'intro', 'selfintro', 'resume'];
+    const validTypes = ['project', 'certificate', 'profile', 'intro', 'mobileintro', 'selfintro', 'resume'];
     if (!targetType || !validTypes.includes(targetType)) {
       return NextResponse.json(
         {
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
     };
 
     const result = await importMediaFromUrl(options);
+    revalidatePath('/');
 
     return NextResponse.json({
       success: true,

@@ -7,7 +7,7 @@ import { allocatePermanentId } from '@/lib/permanentId';
 
 export interface MediaImportOptions {
   sourceUrl: string;
-  targetType: 'project' | 'certificate' | 'profile' | 'intro' | 'selfintro' | 'resume';
+  targetType: 'project' | 'certificate' | 'profile' | 'intro' | 'mobileintro' | 'selfintro' | 'resume';
   targetId?: string; // e.g. "project_001", "cert_001", "default"
   slot?: string; // "main", "1", "2", "3", "portrait", "video", "resume"
 }
@@ -505,6 +505,8 @@ export async function importMediaFromUrl(options: MediaImportOptions): Promise<M
     bucketRelativePath = `profile/profile_${timestamp}.${fileTypeInfo.extension}`;
   } else if (targetType === 'intro') {
     bucketRelativePath = `intro/intro-video_${timestamp}.${fileTypeInfo.extension}`;
+  } else if (targetType === 'mobileintro') {
+    bucketRelativePath = `mobileintro/mobileintro_${timestamp}.${fileTypeInfo.extension}`;
   } else if (targetType === 'selfintro') {
     bucketRelativePath = `selfintro/selfintro_${timestamp}.${fileTypeInfo.extension}`;
   } else if (targetType === 'resume') {
@@ -592,6 +594,20 @@ export async function importMediaFromUrl(options: MediaImportOptions): Promise<M
           mediaObj = JSON.parse(personal.media);
         } catch {}
         mediaObj.introVideo = storedPath;
+        await db.personalInfo.update({
+          where: { id: 'default' },
+          data: { media: JSON.stringify(mediaObj) },
+        });
+      }
+    } else if (targetType === 'mobileintro') {
+      // Update PersonalInfo.media JSON blob with the new mobile intro video path
+      const personal = await db.personalInfo.findUnique({ where: { id: 'default' } });
+      if (personal) {
+        let mediaObj: Record<string, any> = {};
+        try {
+          mediaObj = JSON.parse(personal.media);
+        } catch {}
+        mediaObj.mobileIntroVideo = storedPath;
         await db.personalInfo.update({
           where: { id: 'default' },
           data: { media: JSON.stringify(mediaObj) },

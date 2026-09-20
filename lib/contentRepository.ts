@@ -8,7 +8,8 @@ import { personal, PersonalInfo } from '@/data/personal';
 export interface MediaConfig {
   portrait: string;
   selfIntroVideo: string;
-  introVideo: string; // Main hero pre-loader intro video path
+  introVideo: string; // Main hero pre-loader intro video path (desktop/laptop)
+  mobileIntroVideo: string; // Separate mobile portrait intro video path
   resumePdf: string;
   projectsMediaDir: string;
   certificatesMediaDir: string;
@@ -18,6 +19,7 @@ const defaultMediaConfig: MediaConfig = {
   portrait: '/media/profile/profile.jpeg',
   selfIntroVideo: '/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4',
   introVideo: '/media/intro/intro-video.mp4',
+  mobileIntroVideo: '/media/mobileintro/Mobileintro.mp4',
   resumePdf: '/media/resume.pdf',
   projectsMediaDir: 'public/media/projects/',
   certificatesMediaDir: 'public/media/certificates/',
@@ -160,7 +162,7 @@ class ContentRepositoryImpl {
 
     // Sync latest database persistence
     try {
-      const res = await fetch('/api/admin/data');
+      const res = await fetch('/api/admin/data', { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {

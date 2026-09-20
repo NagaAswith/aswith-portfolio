@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
 import { Upload, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
 
 export type MediaCategory = 'image' | 'video';
-export type MediaFileUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro';
+export type MediaFileUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro' | 'mobileintro';
 
 type UploadState = 'IDLE' | 'UPLOADING' | 'SUCCESS' | 'ERROR';
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { isAuthenticatedAdmin } from '@/lib/adminAuth';
 import { activeStorageProvider } from '@/lib/storage/localStorage';
 import { uploadToStorage, detectFileTypeFromBuffer } from '@/lib/storage/mediaImporter';
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     const slot = (formData.get('slot') as string) || '';
 
     // Validate type to allowed values
-    const ALLOWED_TYPES: StorageUploadType[] = ['certificate', 'project', 'profile', 'intro', 'selfintro'];
+    const ALLOWED_TYPES: StorageUploadType[] = ['certificate', 'project', 'profile', 'intro', 'selfintro', 'mobileintro'];
     const type: StorageUploadType = ALLOWED_TYPES.includes(rawType as StorageUploadType)
       ? (rawType as StorageUploadType)
       : 'certificate';
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const isVideoUpload = mediaCategory === 'video' || type === 'intro' || type === 'selfintro';
+    const isVideoUpload = mediaCategory === 'video' || type === 'intro' || type === 'selfintro' || type === 'mobileintro';
     const maxBytes = (isVideoUpload ? env.maxVideoUploadMb : env.maxImageUploadMb) * 1024 * 1024;
     const maxLabel = isVideoUpload ? `${env.maxVideoUploadMb} MB` : `${env.maxImageUploadMb} MB`;
 
@@ -74,9 +75,9 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // For intro and selfintro: use the Supabase upload path directly.
+    // For intro, mobileintro, and selfintro: use the Supabase upload path directly.
     // This ensures cloud persistence and triggers proper DB update via mediaImporter.
-    if (type === 'intro' || type === 'selfintro') {
+    if (type === 'intro' || type === 'selfintro' || type === 'mobileintro') {
       let fileTypeInfo: { mime: string; extension: string };
       try {
         fileTypeInfo = detectFileTypeFromBuffer(buffer);
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
       }
 
       const timestamp = Date.now();
-      const folder = type === 'intro' ? 'intro' : 'selfintro';
+      const folder = type === 'intro' ? 'intro' : type === 'mobileintro' ? 'mobileintro' : 'selfintro';
       const bucketPath = `${folder}/${folder}_${timestamp}.${fileTypeInfo.extension}`;
 
       const { storedPath, publicUrl } = await uploadToStorage(buffer, bucketPath, fileTypeInfo.mime);
@@ -103,6 +104,8 @@ export async function POST(req: Request) {
           } catch {}
           if (type === 'intro') {
             mediaObj.introVideo = storedPath;
+          } else if (type === 'mobileintro') {
+            mediaObj.mobileIntroVideo = storedPath;
           } else {
             mediaObj.selfIntroVideo = storedPath;
           }
@@ -110,6 +113,7 @@ export async function POST(req: Request) {
             where: { id: 'default' },
             data: { media: JSON.stringify(mediaObj) },
           });
+          revalidatePath('/');
         }
       } catch (dbErr) {
         console.error(`[AdminUpload] Failed to update PersonalInfo media for ${type}:`, dbErr);
