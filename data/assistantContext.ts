@@ -5,9 +5,9 @@
 
 export const assistantContext = {
   personal: {
-    fullName: 'Ranga Naga Aswith',
-    name: 'Aswith',
-    title: 'B.Tech Electronics & Communication Engineering Student',
+    fullName: 'Naga Aswith',
+    name: 'Naga Aswith',
+    title: 'Software Developer | Web Development | AI & Automation',
     degree: 'B.Tech in Electronics and Communication Engineering',
     cgpa: '8.79 / 10',
     expectedGraduation: '2028',
@@ -17,7 +17,7 @@ export const assistantContext = {
       'Embedded Systems & IoT Enthusiast',
     ],
     tagline: 'Building practical software, AI automation platforms, and intelligent connected hardware-software systems.',
-    bio: 'Electronics and Communication Engineering undergraduate with hands-on software development experience in Python, AI automation, web applications, embedded microcontrollers, and data-driven problem solving.',
+    bio: 'Naga Aswith is a software developer focused on designing and developing modern websites, responsive web applications, AI-powered tools, and intelligent automation solutions. The work combines user-friendly design with practical software engineering to create digital experiences that are useful, accessible, and efficient.',
     email: 'nagaaswith3@gmail.com',
     phone: '8328671677',
     github: 'https://github.com/Aswith',

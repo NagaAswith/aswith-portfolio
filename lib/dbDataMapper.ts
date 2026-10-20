@@ -162,13 +162,13 @@ export async function fetchFullAdminData() {
         social: safeJsonParse(dbPersonal.social, { phone: '', email: '', github: '', linkedin: '', resumeUrl: '' }),
       }
     : {
-        name: 'Aswith',
-        fullName: 'Ranga Naga Aswith',
+        name: 'Naga Aswith',
+        fullName: 'Naga Aswith',
         greeting: "HELLO, I'M",
-        title: 'B.Tech Electronics & Communication Engineering Student',
+        title: 'Software Developer | Web Development | AI & Automation',
         roles: ['B.Tech ECE Student', 'Software & AI Automation Developer'],
         tagline: 'Building practical software and connected systems',
-        description: 'ECE undergraduate',
+        description: 'Naga Aswith is a software developer focused on designing and developing modern websites, responsive web applications, AI-powered tools, and intelligent automation solutions.',
         selfIntroVideo: resolveSupabaseMediaUrl('/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4'),
         educationSummary: { degree: 'B.Tech ECE', cgpa: '8.79 / 10', expectedGraduation: '2028' },
         cta: { primary: { label: 'About Me', action: 'about-me' }, secondary: { label: 'Explore My Work', action: 'explore-work' } },

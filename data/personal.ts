@@ -1,5 +1,7 @@
 /**
- * Personal portfolio data for Ranga Naga Aswith.
+ * Personal portfolio data for Naga Aswith.
+ * Standardized public name: Naga Aswith
+ * Professional description: Software Developer | Web Development | AI & Automation
  */
 
 export interface PersonalInfo {
@@ -10,6 +12,7 @@ export interface PersonalInfo {
   roles: string[];
   tagline: string;
   description: string;
+  aboutMe?: string;
   selfIntroVideo: string;
   educationSummary: {
     degree: string;
@@ -39,21 +42,24 @@ export interface PersonalInfo {
 }
 
 export const personal: PersonalInfo = {
-  name: 'Aswith',
-  fullName: 'Ranga Naga Aswith',
+  name: 'Naga Aswith',
+  fullName: 'Naga Aswith',
   greeting: "HELLO, I'M",
 
-  title: 'B.Tech Electronics & Communication Engineering Student',
+  title: 'Software Developer | Web Development | AI & Automation',
   roles: [
-    'B.Tech ECE Student',
-    'Software & AI Automation Developer',
-    'Embedded Systems & IoT Enthusiast',
+    'Software Developer',
+    'Web Development Specialist',
+    'AI & Automation Engineer',
   ],
 
-  tagline: 'Building practical software, AI automation platforms,\nand intelligent connected hardware-software systems.',
+  tagline: 'Designing and developing modern websites, responsive web applications,\nAI-powered tools, and intelligent automation solutions.',
 
   description:
-    'Electronics and Communication Engineering undergraduate with hands-on software development experience in Python, AI automation, web applications, embedded microcontrollers, and data-driven problem solving.',
+    'Naga Aswith is a software developer focused on designing and developing modern websites, responsive web applications, AI-powered tools, and intelligent automation solutions. The work combines user-friendly design with practical software engineering to create digital experiences that are useful, accessible, and efficient.',
+
+  aboutMe:
+    'Naga Aswith is a software developer focused on designing and developing modern websites, responsive web applications, AI-powered tools, and intelligent automation solutions. The work combines user-friendly design with practical software engineering to create digital experiences that are useful, accessible, and efficient.\n\nAreas of focus include website design and development, full-stack web applications, AI integration, automation agents, API integration, database-driven applications, and workflow automation.\n\nThe goal is to build reliable, intuitive digital products that help people and businesses simplify tasks, access information, and make better use of technology.',
 
   selfIntroVideo: '/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4',
 
