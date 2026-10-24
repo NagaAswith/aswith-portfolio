@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -152,6 +153,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-black text-white selection:bg-cyan-500 selection:text-black font-sans overflow-x-hidden relative w-full min-h-full">
         <AppProviders>{children}</AppProviders>
+        <SpeedInsights />
       </body>
     </html>
   );
