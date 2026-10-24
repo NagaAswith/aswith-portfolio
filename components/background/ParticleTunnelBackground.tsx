@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { usePerformanceStore } from '@/store/usePerformanceStore';
 import { useIntroStore } from '@/store/useIntroStore';
 
-const PARTICLE_TUNNEL_ASSET = '/media/background/Particle_tunnel_portfolio_video_._20261024144915.mp4';
+const PARTICLE_TUNNEL_ASSET = '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4';
 
 /**
  * ParticleTunnelBackground
