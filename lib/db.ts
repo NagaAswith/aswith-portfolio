@@ -18,12 +18,18 @@ function getPrismaClient(): AppPrismaClient {
 
   let client: AppPrismaClient;
   if (isPostgres) {
+    // In serverless environments, use transaction pooler port 6543 to avoid session pool exhaustion (EMAXCONNSESSION)
+    let connectionUrl = url;
+    if (connectionUrl.includes('pooler.supabase.com:5432')) {
+      connectionUrl = connectionUrl.replace(':5432', ':6543');
+    }
+
     const pool = new pg.Pool({
-      connectionString: url,
+      connectionString: connectionUrl,
       ssl: { rejectUnauthorized: false },
       connectionTimeoutMillis: 10000,
-      idleTimeoutMillis: 30000,
-      max: 10,
+      idleTimeoutMillis: 10000,
+      max: 2,
     });
     const adapter = new PrismaPg(pool);
     client = new PostgresPrismaClient({
