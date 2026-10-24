@@ -13,6 +13,9 @@ export interface MediaConfig {
   resumePdf: string;
   projectsMediaDir: string;
   certificatesMediaDir: string;
+  backgroundMusic?: string;
+  backgroundMusicVolume?: number;
+  backgroundMusicEnabled?: boolean;
 }
 
 const defaultMediaConfig: MediaConfig = {
@@ -23,6 +26,9 @@ const defaultMediaConfig: MediaConfig = {
   resumePdf: '/media/resume.pdf',
   projectsMediaDir: 'public/media/projects/',
   certificatesMediaDir: 'public/media/certificates/',
+  backgroundMusic: '/media/back_music/pirate.mp3',
+  backgroundMusicVolume: 0.35,
+  backgroundMusicEnabled: true,
 };
 
 
@@ -245,6 +251,11 @@ class ContentRepositoryImpl {
     return this.projects.find((p) => p.id === id);
   }
 
+  public getNextProjectId(): string {
+    const existingIds = this.projects.map((p) => p.id);
+    return getNextPermanentId('project', existingIds, this.retiredProjectIds);
+  }
+
   public createProject(
     data: Omit<ProjectItem, 'id' | 'number' | 'slug'> & { id?: string; slug?: string }
   ): ProjectItem {
@@ -344,6 +355,11 @@ class ContentRepositoryImpl {
 
   public getCertificateById(id: string): CertificateItem | undefined {
     return this.certificates.find((c) => c.id === id);
+  }
+
+  public getNextCertificateId(): string {
+    const existingIds = this.certificates.map((c) => c.id);
+    return getNextPermanentId('cert', existingIds, this.retiredCertIds);
   }
 
   public createCertificate(

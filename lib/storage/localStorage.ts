@@ -47,16 +47,21 @@ export class LocalStorageProvider implements StorageProvider {
 
     const sanitizedOriginalName = this.sanitizeFilename(originalName);
 
+    const isVideo = type === 'intro' || type === 'selfintro' || type === 'mobileintro' || slot === 'video';
+    const isDoc = type === 'resume';
+    const isAudio = type === 'music';
+    const validationCategory = isVideo ? 'video' : isDoc ? 'document' : isAudio ? 'audio' : 'image';
+
     // 1. Extension & Header Validation
-    const validation = validateFileBuffer(fileBuffer, sanitizedOriginalName, 'image');
+    const validation = validateFileBuffer(fileBuffer, sanitizedOriginalName, validationCategory);
     if (!validation.valid) {
       throw new Error(validation.error || 'Invalid file format or header magic bytes.');
     }
 
     // 2. File Size Limit Validation
-    const maxBytes = env.maxImageUploadMb * 1024 * 1024;
+    const maxBytes = (isVideo ? env.maxVideoUploadMb : isDoc ? 50 : isAudio ? 50 : env.maxImageUploadMb) * 1024 * 1024;
     if (fileBuffer.length > maxBytes) {
-      throw new Error(`File size (${(fileBuffer.length / (1024 * 1024)).toFixed(2)} MB) exceeds maximum allowed limit of ${env.maxImageUploadMb} MB.`);
+      throw new Error(`File size (${(fileBuffer.length / (1024 * 1024)).toFixed(2)} MB) exceeds maximum allowed limit of ${isVideo ? env.maxVideoUploadMb : 50} MB.`);
     }
 
     // 3. Determine safe output folder
@@ -74,9 +79,18 @@ export class LocalStorageProvider implements StorageProvider {
     } else if (type === 'intro') {
       targetFolder = 'intro';
       relativeSubdir = path.join('media', 'intro');
+    } else if (type === 'mobileintro') {
+      targetFolder = 'mobileintro';
+      relativeSubdir = path.join('media', 'mobileintro');
     } else if (type === 'selfintro') {
       targetFolder = 'selfintro';
       relativeSubdir = path.join('media', 'selfintro');
+    } else if (type === 'resume') {
+      targetFolder = 'resume';
+      relativeSubdir = path.join('media', 'resume');
+    } else if (type === 'music') {
+      targetFolder = 'back_music';
+      relativeSubdir = path.join('media', 'back_music');
     } else {
       targetFolder = 'profile';
       relativeSubdir = path.join('media', 'profile');
@@ -126,8 +140,14 @@ export class LocalStorageProvider implements StorageProvider {
       rawPath = `/media/projects/${targetFolder}/${finalFileName}`;
     } else if (type === 'intro') {
       rawPath = `/media/intro/${finalFileName}`;
+    } else if (type === 'mobileintro') {
+      rawPath = `/media/mobileintro/${finalFileName}`;
     } else if (type === 'selfintro') {
       rawPath = `/media/selfintro/${finalFileName}`;
+    } else if (type === 'resume') {
+      rawPath = `/media/resume/${finalFileName}`;
+    } else if (type === 'music') {
+      rawPath = `/media/back_music/${finalFileName}`;
     } else {
       rawPath = `/media/profile/${finalFileName}`;
     }

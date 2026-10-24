@@ -68,23 +68,54 @@ const CREATOR_PATTERNS = [
   'who is your boss',
   'who is ur boss',
   'who is your owner',
+  'who is ur owner',
+  'who is your developer',
+  'who is ur developer',
+  'who is your creator',
+  'who is ur creator',
+  'who is your designer',
+  'who is ur designer',
+  'who is your maker',
+  'who is ur maker',
   'who made you',
   'who made u',
+  'who make you',
+  'who make u',
   'who created you',
   'who created u',
+  'who create you',
+  'who create u',
   'who built you',
   'who built u',
+  'who build you',
+  'who build u',
   'who developed you',
   'who developed u',
+  'who develop you',
+  'who develop u',
+  'who designed you',
+  'who designed u',
+  'who design you',
+  'who design u',
+  'who programmed you',
+  'who programmed u',
+  'who coded you',
+  'who coded u',
   'who do you work for',
+  'who do u work for',
   'who owns this assistant',
+  'who owns this bot',
   'who owns you',
   'who owns u',
   'who made this bot',
   'who created this bot',
   'who is the boss',
   'who is the owner',
+  'who is the creator',
+  'who is the developer',
 ];
+
+const CREATOR_REGEX = /\bwho\s+(?:is\s+(?:your|ur|the)\s+(?:boss|creator|developer|owner|maker|designer|programmer)|(?:build|built|create|created|made|make|develop|developed|designed|design|programmed|program|coded|code|owns|own)\s+(?:you|u|this|this\s+bot|this\s+assistant|this\s+ai))\b/i;
 
 // Security injection triggers
 const SECURITY_PATTERNS = [
@@ -118,7 +149,7 @@ const SECURITY_PATTERNS = [
 
 export function detectIntents(input: NormalizedInput, dynamicKnowledge?: any): IntentAnalysis {
   const norm = input.normalized;
-  const tokens = input.tokens;
+  const _tokens = input.tokens;
   const intents: DetectedIntent[] = [];
 
   // ── 1. SECURITY / INJECTION CHECK (HIGHEST PRIORITY) ──────────────────────
@@ -130,11 +161,13 @@ export function detectIntents(input: NormalizedInput, dynamicKnowledge?: any): I
   }
 
   // ── 2. CREATOR / BOSS DETERMINISTIC INTENT ───────────────────────────────
-  for (const pattern of CREATOR_PATTERNS) {
-    if (norm.includes(pattern)) {
-      const creatorIntent: DetectedIntent = { type: 'CREATOR_BOSS', confidence: 1.0 };
-      return { primaryIntent: creatorIntent, multiIntents: [creatorIntent], isMultiIntent: false };
-    }
+  if (
+    CREATOR_REGEX.test(input.raw) ||
+    CREATOR_REGEX.test(norm) ||
+    CREATOR_PATTERNS.some((p) => norm.includes(p))
+  ) {
+    const creatorIntent: DetectedIntent = { type: 'CREATOR_BOSS', confidence: 1.0 };
+    return { primaryIntent: creatorIntent, multiIntents: [creatorIntent], isMultiIntent: false };
   }
 
   // ── 3. USER CONFIRMATIONS (YES / NO) ──────────────────────────────────────
@@ -389,7 +422,14 @@ export function detectIntents(input: NormalizedInput, dynamicKnowledge?: any): I
   // ── 12. GENERAL PROJECTS LIST ─────────────────────────────────────────────
   if (
     norm === 'projects' ||
+    norm === 'project' ||
+    norm === 'aswith project' ||
     norm === 'aswith projects' ||
+    norm.includes('aswith project') ||
+    norm.includes('all projects') ||
+    norm.includes('project list') ||
+    norm.includes('list projects') ||
+    norm.includes('show projects') ||
     norm === 'his projects' ||
     norm === 'what he built' ||
     norm.includes('what has he built') ||
@@ -423,6 +463,8 @@ export function detectIntents(input: NormalizedInput, dynamicKnowledge?: any): I
   if (
     norm === 'his skills' ||
     norm === 'skills' ||
+    norm === 'skill' ||
+    norm.includes('skill') ||
     norm.includes('what skills') ||
     norm.includes('what technologies') ||
     norm.includes('tech stack') ||
@@ -447,6 +489,7 @@ export function detectIntents(input: NormalizedInput, dynamicKnowledge?: any): I
   // ── 15. CERTIFICATES & ACHIEVEMENTS ───────────────────────────────────────
   if (
     norm === 'certificates' ||
+    norm === 'certificate' ||
     norm.includes('certificate') ||
     norm.includes('certification') ||
     norm.includes('credential') ||

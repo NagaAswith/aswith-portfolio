@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { Volume2 } from 'lucide-react';
 import { useIntroStore } from '@/store/useIntroStore';
 import { usePortfolioContent } from '@/store/usePortfolioContent';
 import { resolveSupabaseMediaUrl } from '@/lib/storage/supabaseMedia';
+
+// Safety ceiling for video failure recovery (only triggers if video completely hangs/fails to emit ended or error)
+const FAILSAFE_DURATION = 90000;
 
 export function IntroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -21,13 +25,22 @@ export function IntroVideo() {
     media?.mobileIntroVideo || '/media/mobileintro/Mobileintro.mp4'
   );
 
-  // Responsive device/orientation detection (mobile portrait vs desktop/landscape)
+  // Sound prompt state if browser autoplay policy blocks unmuted audio
+  const [isSoundBlocked, setIsSoundBlocked] = useState<boolean>(false);
+  const [playbackFailed, setPlaybackFailed] = useState<boolean>(false);
+  const hasEndedRef = useRef<boolean>(false);
+
+  // Responsive device/orientation detection (phones, tablets, and desktop)
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return (
+      const isPortraitPhone =
         window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches ||
-        (window.innerWidth <= 768 && window.innerHeight > window.innerWidth)
-      );
+        (window.innerWidth <= 768 && window.innerHeight > window.innerWidth);
+      const isPortraitTablet =
+        window.innerWidth > 768 &&
+        window.innerWidth <= 1024 &&
+        window.innerHeight > window.innerWidth;
+      return isPortraitPhone || isPortraitTablet;
     }
     return false;
   });
@@ -36,9 +49,9 @@ export function IntroVideo() {
     if (typeof window === 'undefined') return;
     const mql = window.matchMedia('(max-width: 768px) and (orientation: portrait)');
     const updateOrientation = () => {
-      setIsMobile(
-        mql.matches || (window.innerWidth <= 768 && window.innerHeight > window.innerWidth)
-      );
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const isSmallOrTablet = window.innerWidth <= 1024;
+      setIsMobile(mql.matches || (isSmallOrTablet && isPortrait));
     };
     updateOrientation();
     mql.addEventListener('change', updateOrientation);
@@ -51,72 +64,91 @@ export function IntroVideo() {
 
   const activeVideoUrl = isMobile ? mobileVideoUrl : desktopVideoUrl;
 
-  // Sync muted state to video element imperatively — avoids re-renders
+  // Sync muted state to video element imperatively
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
     }
   }, [isMuted]);
 
-  // Handle actual video ended event or error — the only valid signal to show Enter the World
+  // Handle actual video ended event — the authoritative signal to reveal "Enter the World"
   const handleEnded = useCallback(() => {
+    if (hasEndedRef.current) return;
+    hasEndedRef.current = true;
+    setIsSoundBlocked(false);
     setIntroState('MESSAGE_READY');
   }, [setIntroState]);
 
-  // Attempt playback on mount with robust mobile and desktop handling
+  // Handle media playback error gracefully so screen is never permanently blocked
+  const handlePlaybackError = useCallback(() => {
+    console.warn('Intro video playback error encountered. Activating graceful fallback.');
+    setPlaybackFailed(true);
+    handleEnded();
+  }, [handleEnded]);
+
+  // Attempt playback on mount with unmuted sound first (Requirement 2)
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Ensure muted state is active on mount for mobile autoplay compliance
-    video.muted = isMuted;
+    hasEndedRef.current = false;
+    setPlaybackFailed(false);
 
     const startPlayback = async () => {
       try {
+        // Attempt unmuted playback directly on both desktop and mobile
+        video.muted = false;
         await video.play();
-
-        // Check if on mobile device
-        const isMobileDevice =
-          typeof navigator !== 'undefined' &&
-          /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-        if (!isMobileDevice && !isMuted) {
-          // On desktop, attempt unmuting if policy allows
-          video.muted = false;
-          video.play().catch(() => {
-            // Audio blocked on desktop; retain muted
-            video.muted = true;
-            setMuted(true);
-          });
-        } else if (isMobileDevice && !isMuted) {
-          // On mobile, retain muted by default per OS policy
-          setMuted(true);
-        }
+        setMuted(false);
+        setIsSoundBlocked(false);
       } catch (err: unknown) {
-        // Browser autoplay policy blocked initial attempt.
-        // Fall back to strictly muted playback.
-        setMuted(true);
-        video.muted = true;
-        video.play().catch((retryErr: unknown) => {
-          console.warn('Intro video: playback unavailable, activating fallback.', retryErr);
-          // Video cannot play (e.g. low power mode) — transition immediately to message ready
-          handleEnded();
-        });
+        // Autoplay with sound denied by browser policy -> fall back to muted and show prompt
+        console.info('Unmuted autoplay restricted by browser policy; starting muted with sound control.', err);
+        try {
+          video.muted = true;
+          setMuted(true);
+          await video.play();
+          setIsSoundBlocked(true);
+        } catch (retryErr: unknown) {
+          console.warn('Muted playback also failed, enabling recovery fallback.', retryErr);
+          handlePlaybackError();
+        }
       }
     };
 
     startPlayback();
-  }, [activeVideoUrl, isMuted, setMuted, handleEnded]);
+  }, [activeVideoUrl, setMuted, handlePlaybackError]);
 
-  // Failsafe: if video fails to load/play or stalls, ensure the experience does not hang indefinitely on black screen
+  // Failsafe timer: only fires if video fails to complete within generous timeout
   useEffect(() => {
     const failsafeTimer = setTimeout(() => {
-      if (useIntroStore.getState().introState === 'INTRO_PLAYING') {
-        setIntroState('MESSAGE_READY');
+      if (useIntroStore.getState().introState === 'INTRO_PLAYING' && !hasEndedRef.current) {
+        console.warn('Intro video failsafe timer reached. Transitioning to ready state.');
+        handleEnded();
       }
-    }, 10000);
+    }, FAILSAFE_DURATION);
     return () => clearTimeout(failsafeTimer);
-  }, [setIntroState]);
+  }, [handleEnded]);
+
+  // Enable sound and restart video from beginning when user interacts with prompt
+  const handleEnableSound = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    setMuted(false);
+    setIsSoundBlocked(false);
+    video.currentTime = 0;
+    video.play().catch((e) => console.warn('Could not replay with sound:', e));
+  };
+
+  // Skip directly to message ready if user chooses
+  const handleSkipIntro = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+    }
+    handleEnded();
+  };
 
   // Determine transition phase visibility
   const isBeforeTransition =
@@ -132,13 +164,11 @@ export function IntroVideo() {
   if (introState === 'PORTFOLIO_ACTIVE') return null;
 
   const resolvedSource = activeVideoUrl;
-  const handlePlaybackError = handleEnded;
 
   return (
     <div
       className="absolute inset-0 z-10 overflow-hidden bg-black"
       style={{
-        // During transition: scale up and fade out
         transform: isDuringTransition ? 'scale(1.08)' : 'scale(1)',
         opacity: isDuringTransition ? 0 : 1,
         filter: isDuringTransition ? 'blur(8px)' : 'none',
@@ -164,7 +194,6 @@ export function IntroVideo() {
         preload="auto"
         onEnded={handleEnded}
         onError={handlePlaybackError}
-        // no loop — stays on final frame after ended
         style={{
           width: '100%',
           height: '100%',
@@ -177,7 +206,59 @@ export function IntroVideo() {
         <source media="(min-width: 769px), (orientation: landscape)" src={desktopVideoUrl} type="video/mp4" />
         <source src={desktopVideoUrl} type="video/mp4" />
       </video>
-      {/* Very subtle bottom gradient — only for readability of message text above */}
+
+      {/* Prominent "Play Intro with Sound" control when unmuted autoplay was blocked (Requirement 2) */}
+      {isSoundBlocked && introState === 'INTRO_PLAYING' && (
+        <div className="absolute inset-x-0 bottom-24 sm:bottom-28 z-30 flex items-center justify-center px-4 pointer-events-auto animate-fade-in">
+          <button
+            onClick={handleEnableSound}
+            aria-label="Play intro video with sound"
+            className="group flex items-center gap-3 px-5 py-3 rounded-full bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/50 hover:border-cyan-400 text-white shadow-[0_0_35px_rgba(34,211,238,0.4)] backdrop-blur-xl transition-all duration-300 cursor-pointer hover:scale-105"
+          >
+            <div className="w-8 h-8 rounded-full bg-cyan-400/20 text-cyan-300 flex items-center justify-center group-hover:bg-cyan-400 group-hover:text-black transition-colors">
+              <Volume2 className="w-4 h-4 animate-pulse" />
+            </div>
+            <div className="text-left">
+              <span className="block text-xs font-mono font-bold tracking-wider text-cyan-300 group-hover:text-white uppercase">
+                Play Intro with Sound
+              </span>
+              <span className="block text-[10px] text-white/60 font-mono">
+                Click to unmute spoken narration
+              </span>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* Accessible Skip Button */}
+      {introState === 'INTRO_PLAYING' && (
+        <div className="absolute top-6 right-6 z-30 pointer-events-auto">
+          <button
+            onClick={handleSkipIntro}
+            aria-label="Skip introduction video"
+            className="px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/70 border border-white/10 hover:border-white/30 text-white/60 hover:text-white text-[11px] font-mono tracking-widest uppercase backdrop-blur-md transition-all cursor-pointer"
+          >
+            Skip Intro →
+          </button>
+        </div>
+      )}
+
+      {/* Playback Failure Recovery Notice */}
+      {playbackFailed && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-black/80 backdrop-blur-md">
+          <p className="text-sm font-mono text-cyan-400 mb-4">
+            Direct video playback unavailable on this device.
+          </p>
+          <button
+            onClick={handleEnded}
+            className="px-6 py-2.5 rounded-xl bg-cyan-400 text-black font-mono font-bold text-xs"
+          >
+            Continue to Portfolio
+          </button>
+        </div>
+      )}
+
+      {/* Subtle bottom gradient for readability */}
       <div
         className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none"
         style={{
@@ -187,4 +268,3 @@ export function IntroVideo() {
     </div>
   );
 }
-

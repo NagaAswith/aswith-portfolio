@@ -4,9 +4,10 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, ChevronLeft, ChevronRight, Cpu, Globe, Code2, Layers, CheckCircle2 } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight, Cpu, Globe, Code2, Layers, CheckCircle2, Play, Video } from 'lucide-react';
 import { ProjectItem } from '@/data/projects';
 import { formatImageUrl } from '@/data/assetManifest';
+import { resolveSupabaseMediaUrl } from '@/lib/storage/supabaseMedia';
 
 interface ProjectModalProps {
   project: ProjectItem | null;
@@ -70,6 +71,7 @@ function GalleryImage({
  */
 export function ProjectModal({ project, onClose }: ProjectModalProps) {
   const [selectedGalleryIdx, setSelectedGalleryIdx] = useState(0);
+  const [isVideoActive, setIsVideoActive] = useState(false);
   const [mounted, setMounted] = useState(false);
   const scrollPosRef = useRef<number>(0);
 
@@ -87,9 +89,10 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
     return Array.from(new Set(formattedList));
   }, [project]);
 
-  // Reset gallery index on project change
+  // Reset gallery index and video playback on project change
   useEffect(() => {
     setSelectedGalleryIdx(0);
+    setIsVideoActive(false);
   }, [project]);
 
   // Isolated Body Scroll Lock & Scroll Position Preservation
@@ -255,50 +258,83 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                   custom={0}
                   className="lg:col-span-7 space-y-5"
                 >
-                  {/* Main Project Hero Image Container */}
+                  {/* Main Project Hero Media Container (Image or Video) */}
                   <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden bg-zinc-900/90 border border-white/15 shadow-2xl flex items-center justify-center group">
-                    <GalleryImage
-                      key={currentImage}
-                      src={currentImage}
-                      alt={`${project.title} screenshot ${selectedGalleryIdx + 1}`}
-                      fill
-                      priority
-                      sizes="(max-width: 1024px) 100vw, 750px"
-                      className="object-cover object-center transition-all duration-500"
-                    />
-
-                    {/* Image Controls Overlay */}
-                    {allImages.length > 1 && (
+                    {isVideoActive && project.videoUrl ? (
+                      <div className="relative w-full h-full bg-black flex items-center justify-center">
+                        <video
+                          src={resolveSupabaseMediaUrl(project.videoUrl)}
+                          controls
+                          autoPlay
+                          playsInline
+                          className="w-full h-full object-contain"
+                        />
+                        <button
+                          onClick={() => setIsVideoActive(false)}
+                          className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-black/80 hover:bg-black text-white/80 hover:text-white border border-white/20 text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg z-10"
+                          aria-label="Back to photo gallery"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Photos</span>
+                        </button>
+                      </div>
+                    ) : (
                       <>
-                        <button
-                          onClick={handlePrevImage}
-                          aria-label="Previous image"
-                          className="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white/80 hover:text-white hover:bg-black/90 transition-all cursor-pointer shadow-xl opacity-90 hover:scale-105"
-                        >
-                          <ChevronLeft className="w-5 h-5" />
-                        </button>
+                        <GalleryImage
+                          key={currentImage}
+                          src={currentImage}
+                          alt={`${project.title} screenshot ${selectedGalleryIdx + 1}`}
+                          fill
+                          priority
+                          sizes="(max-width: 1024px) 100vw, 750px"
+                          className="object-cover object-center transition-all duration-500"
+                        />
 
-                        <button
-                          onClick={handleNextImage}
-                          aria-label="Next image"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white/80 hover:text-white hover:bg-black/90 transition-all cursor-pointer shadow-xl opacity-90 hover:scale-105"
-                        >
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
+                        {/* Image Controls Overlay */}
+                        {allImages.length > 1 && (
+                          <>
+                            <button
+                              onClick={handlePrevImage}
+                              aria-label="Previous image"
+                              className="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white/80 hover:text-white hover:bg-black/90 transition-all cursor-pointer shadow-xl opacity-90 hover:scale-105"
+                            >
+                              <ChevronLeft className="w-5 h-5" />
+                            </button>
 
-                        <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-mono text-cyan-300 border border-cyan-500/30">
-                          {selectedGalleryIdx + 1} / {allImages.length}
-                        </div>
+                            <button
+                              onClick={handleNextImage}
+                              aria-label="Next image"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white/80 hover:text-white hover:bg-black/90 transition-all cursor-pointer shadow-xl opacity-90 hover:scale-105"
+                            >
+                              <ChevronRight className="w-5 h-5" />
+                            </button>
+
+                            <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[11px] font-mono text-cyan-300 border border-cyan-500/30">
+                              {selectedGalleryIdx + 1} / {allImages.length}
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
 
-                  {/* Thumbnail Gallery Row */}
-                  {allImages.length > 1 && (
+                  {/* Thumbnail Gallery Row with Video Support */}
+                  {(allImages.length > 1 || project.videoUrl) && (
                     <div className="space-y-2">
-                      <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest block">
-                        PROJECT GALLERY PREVIEWS
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest block">
+                          PROJECT MEDIA &amp; PREVIEWS
+                        </span>
+                        {project.videoUrl && (
+                          <button
+                            onClick={() => setIsVideoActive(!isVideoActive)}
+                            className="text-[11px] font-mono text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer"
+                          >
+                            <Video className="w-3.5 h-3.5" />
+                            <span>{isVideoActive ? 'View Photos' : 'Watch Video'}</span>
+                          </button>
+                        )}
+                      </div>
 
                       <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 scrollbar-none">
                         {allImages.map((imgUrl, idx) => {
@@ -391,6 +427,20 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
                         <span>Launch Live Platform</span>
                         <ExternalLink className="w-4 h-4 text-cyan-400" />
                       </a>
+                    )}
+                    {project.videoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setIsVideoActive(true)}
+                        className={`inline-flex items-center gap-2.5 px-6 py-3 rounded-xl font-mono text-xs font-semibold uppercase tracking-widest transition-all cursor-pointer ${
+                          isVideoActive
+                            ? 'bg-purple-600 text-white border border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.4)]'
+                            : 'bg-purple-950/60 text-purple-200 hover:bg-purple-900/80 border border-purple-500/40 hover:border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]'
+                        }`}
+                      >
+                        <Play className="w-4 h-4 text-purple-400 fill-purple-400/40" />
+                        <span>Watch Project Video</span>
+                      </button>
                     )}
                     {project.githubUrl && (
                       <a

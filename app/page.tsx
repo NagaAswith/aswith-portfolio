@@ -18,7 +18,10 @@ import { AchievementsSection } from '@/components/achievements/AchievementsSecti
 import { ContactSection } from '@/components/contact/ContactSection';
 import { AsciiRain } from '@/components/ui/AsciiRain';
 import { CinematicBackground } from '@/components/background/CinematicBackground';
+import { ParticleTunnelBackground } from '@/components/background/ParticleTunnelBackground';
 import { SectionTransition } from '@/components/ui/SectionTransition';
+import { BackgroundMusicPlayer } from '@/components/audio/BackgroundMusicPlayer';
+import { MusicControlWidget } from '@/components/audio/MusicControlWidget';
 import { useIntroStore } from '@/store/useIntroStore';
 
 export default function Home() {
@@ -49,6 +52,13 @@ export default function Home() {
 
       {/* Cinematic Multi-Layered Portfolio Background Environment */}
       <CinematicBackground />
+
+      {/* Scroll-Driven Particle Tunnel Background Video & White/Blue Palette */}
+      <ParticleTunnelBackground />
+
+      {/* Background Music Player (global, starts on Enter the World) */}
+      <BackgroundMusicPlayer />
+      <MusicControlWidget />
 
       {/* Special Background (ASCII Digital Rain) — Page 2+ only, smooth fade-in */}
       <div

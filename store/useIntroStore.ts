@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { useMusicStore } from './useMusicStore';
+
 export type IntroState =
   | 'INTRO_PLAYING'
   | 'MESSAGE_READY'
@@ -37,6 +39,9 @@ export const useIntroStore = create<IntroStore>((set, get) => ({
 
     // Step 1 — immediately mark as clicked (starts visual FX + hides message)
     set({ introState: 'MESSAGE_CLICKED' });
+    try {
+      useMusicStore.getState().startMusicOnEnter();
+    } catch {}
 
     // Step 2 — 600ms: portal bloom has expanded, begin black hold
     setTimeout(() => {

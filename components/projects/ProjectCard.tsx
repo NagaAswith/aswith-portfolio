@@ -28,6 +28,11 @@ export function ProjectCard({ project, featured = false, onSelect }: ProjectCard
         <div className="flex items-center justify-between border-b border-white/10 pb-3 text-xs font-mono">
           <span className="text-white/40 tracking-widest font-bold">#{project.number}</span>
           <div className="flex items-center gap-1.5">
+            {project.videoUrl && (
+              <span className="px-2 py-0.5 rounded-full uppercase bg-purple-950/60 text-purple-300 border border-purple-500/40 text-[10px] tracking-wider font-semibold">
+                ▶ Video
+              </span>
+            )}
             {project.categories.map((cat) => (
               <span
                 key={cat}

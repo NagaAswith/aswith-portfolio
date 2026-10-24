@@ -1,21 +1,34 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { Upload, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
+import React, { useRef, useState, useId } from 'react';
+import { Upload, CheckCircle, AlertCircle, Loader2, X, RefreshCw, FileText, Music, Video, Image as ImageIcon } from 'lucide-react';
+import { processImageForUpload, processVideoForUpload, VideoCompressionProgress } from '@/lib/media/clientMediaProcessor';
 
-export type MediaCategory = 'image' | 'video';
-export type MediaFileUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro' | 'mobileintro';
+export type MediaCategory = 'image' | 'video' | 'document' | 'audio';
+export type MediaFileUploadType =
+  | 'certificate'
+  | 'project'
+  | 'profile'
+  | 'intro'
+  | 'selfintro'
+  | 'mobileintro'
+  | 'resume'
+  | 'music';
 
-type UploadState = 'IDLE' | 'UPLOADING' | 'SUCCESS' | 'ERROR';
+type UploadState = 'IDLE' | 'PROCESSING' | 'UPLOADING' | 'SUCCESS' | 'ERROR';
 
 const ACCEPT_MAP: Record<MediaCategory, string> = {
-  image: '.jpg,.jpeg,.png,.webp,.avif,.svg',
-  video: '.mp4,.webm,.mov,.m4v',
+  image: 'image/*,.jpg,.jpeg,.png,.webp,.avif,.bmp,.tiff,.svg',
+  video: 'video/*,.mp4,.webm,.mov,.m4v,.avi,.mkv',
+  document: '.pdf,.docx,.doc,.odt,.rtf,.txt,application/pdf',
+  audio: 'audio/*,.mp3,.mpeg,.wav,.ogg,.m4a',
 };
 
 const MAX_DISPLAY_MB: Record<MediaCategory, number> = {
-  image: 10,
-  video: 100,
+  image: 15,
+  video: 50, // 50 MB Free Supabase plan upload ceiling
+  document: 25,
+  audio: 25,
 };
 
 interface MediaFileUploadProps {
@@ -52,19 +65,6 @@ const ACCENT_CLASSES: Record<string, { btn: string; ring: string; text: string }
   },
 };
 
-/**
- * MediaFileUpload
- *
- * A secure, admin-only direct file upload component.
- * Accepts image or video files and uploads them to the server
- * via POST /api/admin/upload (multipart/form-data).
- *
- * Security:
- * - No client-side magic byte inspection (server handles validation)
- * - File size is checked server-side against env limits
- * - targetId is required for project/certificate types
- * - All uploads require valid admin session cookie
- */
 export function MediaFileUpload({
   targetType,
   targetId = '',
@@ -78,42 +78,91 @@ export function MediaFileUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadState, setUploadState] = useState<UploadState>('IDLE');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [processedFile, setProcessedFile] = useState<File | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [successPath, setSuccessPath] = useState<string>('');
 
   const accent = ACCENT_CLASSES[accentColor] || ACCENT_CLASSES.cyan;
-  const acceptAttr = ACCEPT_MAP[mediaCategory];
-  const maxMb = MAX_DISPLAY_MB[mediaCategory];
-  const defaultLabel = mediaCategory === 'video'
-    ? `Upload ${targetType === 'intro' ? 'Intro' : targetType === 'selfintro' ? 'Self-Intro' : 'Project'} Video`
-    : 'Upload File';
+  const acceptAttr = ACCEPT_MAP[mediaCategory] || ACCEPT_MAP.image;
+  const maxMb = MAX_DISPLAY_MB[mediaCategory] || 50;
+
+  const defaultLabel =
+    mediaCategory === 'video'
+      ? `Upload ${targetType === 'intro' ? 'Intro' : targetType === 'mobileintro' ? 'Mobile Intro' : 'Project'} Video`
+      : mediaCategory === 'document'
+      ? 'Upload Resume Document'
+      : mediaCategory === 'audio'
+      ? 'Upload Background Music'
+      : 'Upload Image File';
+
   const label = buttonLabel || defaultLabel;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] || null;
-    setSelectedFile(f);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0] || null;
+    if (!rawFile) return;
+
+    setSelectedFile(rawFile);
+    setProcessedFile(rawFile);
     setUploadState('IDLE');
     setErrorMessage('');
     setSuccessPath('');
+    setProcessingStatus('');
+
+    // Pre-processing
+    if (mediaCategory === 'image') {
+      try {
+        setUploadState('PROCESSING');
+        setProcessingStatus('Standardizing image to high-quality JPEG...');
+        const result = await processImageForUpload(rawFile);
+        setProcessedFile(result.file);
+        setUploadState('IDLE');
+        setProcessingStatus(
+          result.converted
+            ? `Standardized: ${(result.originalSize / (1024 * 1024)).toFixed(1)} MB → ${(result.processedSize / (1024 * 1024)).toFixed(1)} MB`
+            : ''
+        );
+      } catch {
+        setUploadState('IDLE');
+      }
+    }
   };
 
   const handleClear = () => {
     setSelectedFile(null);
+    setProcessedFile(null);
     setUploadState('IDLE');
     setErrorMessage('');
     setSuccessPath('');
+    setProcessingStatus('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    let fileToUpload = processedFile || selectedFile;
+    if (!fileToUpload) return;
+
+    // Check if large video needs compression before sending to server (Requirement 15)
+    if (mediaCategory === 'video' && fileToUpload.size > 48 * 1024 * 1024) {
+      try {
+        setUploadState('PROCESSING');
+        const compressed = await processVideoForUpload(fileToUpload, (prog: VideoCompressionProgress) => {
+          setProcessingStatus(prog.message);
+        });
+        fileToUpload = compressed.file;
+        setProcessedFile(fileToUpload);
+      } catch (compErr: any) {
+        console.warn('Video compression notice:', compErr);
+      }
+    }
 
     setUploadState('UPLOADING');
     setErrorMessage('');
+    setProcessingStatus('Uploading to secure cloud storage...');
 
     try {
       const formData = new FormData();
-      formData.append('file', selectedFile);
+      formData.append('file', fileToUpload);
       formData.append('type', targetType);
       formData.append('mediaCategory', mediaCategory);
       if (targetId) formData.append('targetId', targetId);
@@ -135,10 +184,11 @@ export function MediaFileUpload({
       }
 
       setUploadState('SUCCESS');
+      setProcessingStatus('');
       setSuccessPath(data.rawPath || data.url || '');
 
       if (onSuccess) {
-        onSuccess(data.rawPath || data.url || '', data.url || '', undefined);
+        onSuccess(data.rawPath || data.url || '', data.url || '', targetId);
       }
     } catch (err: unknown) {
       setUploadState('ERROR');
@@ -147,6 +197,19 @@ export function MediaFileUpload({
   };
 
   const isUploading = uploadState === 'UPLOADING';
+  const isProcessing = uploadState === 'PROCESSING';
+
+  const CategoryIcon =
+    mediaCategory === 'video'
+      ? Video
+      : mediaCategory === 'document'
+      ? FileText
+      : mediaCategory === 'audio'
+      ? Music
+      : ImageIcon;
+
+  const reactId = useId();
+  const inputId = `media-upload-${targetType}-${slot || 'default'}-${reactId.replace(/:/g, '')}`;
 
   return (
     <div className="space-y-2">
@@ -158,26 +221,29 @@ export function MediaFileUpload({
           accept={acceptAttr}
           onChange={handleFileChange}
           className="hidden"
-          id={`media-file-upload-${targetType}-${slot || 'default'}`}
-          disabled={disabled || isUploading}
+          id={inputId}
+          disabled={disabled || isUploading || isProcessing}
         />
         <label
-          htmlFor={`media-file-upload-${targetType}-${slot || 'default'}`}
+          htmlFor={inputId}
           className={[
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-mono',
             'cursor-pointer transition-colors select-none',
-            disabled || isUploading
+            disabled || isUploading || isProcessing
               ? 'opacity-40 pointer-events-none'
               : accent.btn,
           ].join(' ')}
         >
-          <Upload className="w-3.5 h-3.5" />
-          {selectedFile ? 'Change File' : 'Choose File'}
+          <CategoryIcon className="w-3.5 h-3.5" />
+          {selectedFile ? 'Change File' : 'Choose Local File'}
         </label>
 
         {selectedFile && (
           <>
-            <span className="text-[11px] font-mono text-white/60 truncate max-w-[180px]" title={selectedFile.name}>
+            <span
+              className="text-[11px] font-mono text-white/70 truncate max-w-[200px]"
+              title={selectedFile.name}
+            >
               {selectedFile.name}
             </span>
             <span className="text-[10px] font-mono text-white/40">
@@ -185,8 +251,8 @@ export function MediaFileUpload({
             </span>
             <button
               onClick={handleClear}
-              disabled={isUploading}
-              className="text-white/30 hover:text-white/60 transition-colors"
+              disabled={isUploading || isProcessing}
+              className="text-white/30 hover:text-white/70 transition-colors cursor-pointer"
               title="Clear selection"
             >
               <X className="w-3.5 h-3.5" />
@@ -195,15 +261,23 @@ export function MediaFileUpload({
         )}
       </div>
 
-      {/* Upload button — only shows when file is selected */}
+      {/* Processing status */}
+      {processingStatus && (
+        <div className="flex items-center gap-1.5 text-[10px] font-mono text-cyan-400">
+          {isProcessing && <RefreshCw className="w-3 h-3 animate-spin" />}
+          <span>{processingStatus}</span>
+        </div>
+      )}
+
+      {/* Upload button — only shows when file is selected and not yet uploaded */}
       {selectedFile && uploadState !== 'SUCCESS' && (
         <button
           onClick={handleUpload}
-          disabled={disabled || isUploading}
+          disabled={disabled || isUploading || isProcessing}
           className={[
             'flex items-center gap-1.5 px-4 py-2 rounded-xl border text-[11px] font-mono font-semibold',
             'transition-colors cursor-pointer',
-            disabled || isUploading
+            disabled || isUploading || isProcessing
               ? 'opacity-40 pointer-events-none bg-white/5 border-white/10 text-white/40'
               : `${accent.btn}`,
           ].join(' ')}
@@ -211,12 +285,17 @@ export function MediaFileUpload({
           {isUploading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Uploading...
+              <span>Uploading to Storage...</span>
+            </>
+          ) : isProcessing ? (
+            <>
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>Processing Media...</span>
             </>
           ) : (
             <>
               <Upload className="w-3.5 h-3.5" />
-              {label}
+              <span>{label}</span>
             </>
           )}
         </button>
@@ -226,9 +305,11 @@ export function MediaFileUpload({
       {uploadState === 'SUCCESS' && (
         <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
           <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span className="text-[11px] font-mono text-emerald-400">Uploaded successfully.</span>
+          <span className="text-[11px] font-mono text-emerald-400">
+            Uploaded as draft. Click Save to persist change.
+          </span>
           {successPath && (
-            <span className="text-[10px] font-mono text-white/40 truncate" title={successPath}>
+            <span className="text-[10px] font-mono text-white/40 truncate max-w-[220px]" title={successPath}>
               → {successPath}
             </span>
           )}
@@ -246,8 +327,12 @@ export function MediaFileUpload({
       {/* Helper text */}
       <p className="text-[10px] font-mono text-white/30">
         {mediaCategory === 'video'
-          ? `Accepted: MP4, WebM, MOV, M4V · Max ${maxMb} MB`
-          : `Accepted: JPG, PNG, WebP, AVIF, SVG · Max ${maxMb} MB`}
+          ? `Supported: MP4, MOV, WebM, M4V, AVI · Target: < 50 MB (auto-compressed if large)`
+          : mediaCategory === 'document'
+          ? `Supported: PDF, DOCX, DOC, ODT, RTF, TXT · Max ${maxMb} MB`
+          : mediaCategory === 'audio'
+          ? `Supported: MP3, MPEG, WAV, OGG, M4A · Max ${maxMb} MB`
+          : `Supported: JPG, PNG, WebP, AVIF, BMP, TIFF, SVG · Standardized to JPEG · Max ${maxMb} MB`}
       </p>
     </div>
   );

@@ -440,7 +440,8 @@ export async function uploadToStorage(
  * Main atomic import pipeline
  */
 export async function importMediaFromUrl(options: MediaImportOptions): Promise<MediaImportResult> {
-  let { sourceUrl, targetType, targetId = '', slot = '' } = options;
+  const { sourceUrl, targetType, slot = '' } = options;
+  let { targetId = '' } = options;
 
   if (!sourceUrl || typeof sourceUrl !== 'string' || !sourceUrl.trim()) {
     throw new Error('Source media URL is required.');

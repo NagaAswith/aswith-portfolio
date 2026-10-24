@@ -6,7 +6,6 @@ import { uploadToStorage, detectFileTypeFromBuffer } from '@/lib/storage/mediaIm
 import { env } from '@/lib/env';
 import { validateCsrfOrigin } from '@/lib/csrf';
 import { StorageUploadType } from '@/lib/storage/index';
-import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
   const isAuth = await isAuthenticatedAdmin(req);
@@ -33,7 +32,16 @@ export async function POST(req: Request) {
     const slot = (formData.get('slot') as string) || '';
 
     // Validate type to allowed values
-    const ALLOWED_TYPES: StorageUploadType[] = ['certificate', 'project', 'profile', 'intro', 'selfintro', 'mobileintro'];
+    const ALLOWED_TYPES: StorageUploadType[] = [
+      'certificate',
+      'project',
+      'profile',
+      'intro',
+      'selfintro',
+      'mobileintro',
+      'resume',
+      'music',
+    ];
     const type: StorageUploadType = ALLOWED_TYPES.includes(rawType as StorageUploadType)
       ? (rawType as StorageUploadType)
       : 'certificate';
@@ -45,8 +53,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // FIX: Require targetId for project and certificate uploads.
-    // Previously a missing targetId would silently default to project1/ folder.
+    // Require targetId for project and certificate uploads if targetId is missing
     if ((type === 'project' || type === 'certificate') && !targetId.trim()) {
       return NextResponse.json(
         {
@@ -58,8 +65,11 @@ export async function POST(req: Request) {
     }
 
     const isVideoUpload = mediaCategory === 'video' || type === 'intro' || type === 'selfintro' || type === 'mobileintro';
-    const maxBytes = (isVideoUpload ? env.maxVideoUploadMb : env.maxImageUploadMb) * 1024 * 1024;
-    const maxLabel = isVideoUpload ? `${env.maxVideoUploadMb} MB` : `${env.maxImageUploadMb} MB`;
+    const isDocUpload = mediaCategory === 'document' || type === 'resume';
+    const isAudioUpload = mediaCategory === 'audio' || type === 'music';
+
+    const maxBytes = (isVideoUpload ? env.maxVideoUploadMb : isDocUpload ? 50 : isAudioUpload ? 50 : env.maxImageUploadMb) * 1024 * 1024;
+    const maxLabel = isVideoUpload ? `${env.maxVideoUploadMb} MB` : isDocUpload ? '50 MB' : isAudioUpload ? '50 MB' : `${env.maxImageUploadMb} MB`;
 
     if (file.size > maxBytes) {
       return NextResponse.json(
@@ -71,12 +81,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const originalName = file.name || (isVideoUpload ? 'video.mp4' : 'image.jpg');
+    const originalName = file.name || (isVideoUpload ? 'video.mp4' : isDocUpload ? 'resume.pdf' : isAudioUpload ? 'audio.mp3' : 'image.jpg');
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
     // For intro, mobileintro, and selfintro: use the Supabase upload path directly.
-    // This ensures cloud persistence and triggers proper DB update via mediaImporter.
+    // Ensure cloud persistence while keeping DB reference unchanged until explicit Save.
     if (type === 'intro' || type === 'selfintro' || type === 'mobileintro') {
       let fileTypeInfo: { mime: string; extension: string };
       try {
@@ -94,31 +104,6 @@ export async function POST(req: Request) {
 
       const { storedPath, publicUrl } = await uploadToStorage(buffer, bucketPath, fileTypeInfo.mime);
 
-      // Update PersonalInfo.media in DB
-      try {
-        const personal = await db.personalInfo.findUnique({ where: { id: 'default' } });
-        if (personal) {
-          let mediaObj: Record<string, any> = {};
-          try {
-            mediaObj = JSON.parse(personal.media);
-          } catch {}
-          if (type === 'intro') {
-            mediaObj.introVideo = storedPath;
-          } else if (type === 'mobileintro') {
-            mediaObj.mobileIntroVideo = storedPath;
-          } else {
-            mediaObj.selfIntroVideo = storedPath;
-          }
-          await db.personalInfo.update({
-            where: { id: 'default' },
-            data: { media: JSON.stringify(mediaObj) },
-          });
-          revalidatePath('/');
-        }
-      } catch (dbErr) {
-        console.error(`[AdminUpload] Failed to update PersonalInfo media for ${type}:`, dbErr);
-      }
-
       return NextResponse.json({
         success: true,
         url: publicUrl,
@@ -126,11 +111,11 @@ export async function POST(req: Request) {
         fileName: `${folder}_${timestamp}.${fileTypeInfo.extension}`,
         sizeBytes: buffer.length,
         mimeType: fileTypeInfo.mime,
-        message: `${type} video uploaded and registered successfully.`,
+        message: `${type} video uploaded to storage draft. Click Save to publish.`,
       });
     }
 
-    // For project (including video slot), certificate, profile: use activeStorageProvider
+    // For project (including video slot), certificate, profile, resume, music: use activeStorageProvider
     const result = await activeStorageProvider.uploadFile(
       buffer,
       originalName,
@@ -139,17 +124,9 @@ export async function POST(req: Request) {
       slot
     );
 
-    // If project video slot upload, also update project in database if targetId is set
-    if (type === 'project' && slot === 'video' && targetId) {
-      try {
-        await db.project.update({
-          where: { id: targetId },
-          data: { videoUrl: result.rawPath },
-        });
-      } catch (dbErr) {
-        console.error('[AdminUpload] Failed to update project videoUrl in DB:', dbErr);
-      }
-    }
+    try {
+      revalidatePath('/');
+    } catch {}
 
     return NextResponse.json({
       success: true,

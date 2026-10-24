@@ -30,14 +30,7 @@ import {
   X,
   AlertTriangle,
   Layers,
-  Sparkles,
-  Link as LinkIcon,
-  Globe,
-  Phone,
-  Mail,
-  MapPin,
   RefreshCw,
-  Sliders,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -49,6 +42,8 @@ import { ExperienceItem, EducationItem } from '@/data/experience';
 import { AchievementItem } from '@/data/achievements';
 import { PersonalInfo } from '@/data/personal';
 import { usePortfolioContent } from '@/store/usePortfolioContent';
+import { contentRepository } from '@/lib/contentRepository';
+import { useMusicStore } from '@/store/useMusicStore';
 import { formatImageUrl } from '@/data/assetManifest';
 import { MediaImportControl } from './MediaImportControl';
 import { MediaFileUpload } from './MediaFileUpload';
@@ -518,29 +513,56 @@ function ProjectEditorModal({
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
                   <div className="sm:col-span-8 space-y-3">
-                    <MediaImportControl
-                      currentValue={form.images?.main}
-                      targetType="project"
-                      targetId={form.id}
-                      slot="main"
-                      accentColor="cyan"
-                      buttonLabel="Import & Replace"
-                      placeholder="Paste image URL or public Google Drive link..."
-                      onSuccess={(newPath, _publicUrl, allocatedId) => {
-                        setForm((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            id: prev.id || allocatedId || prev.id,
-                            images: {
-                              ...prev.images,
-                              main: newPath,
-                              gallery: prev.images?.gallery || [],
-                            },
-                          };
-                        });
-                      }}
-                    />
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                      <MediaFileUpload
+                        targetType="project"
+                        targetId={form.id}
+                        slot="main"
+                        mediaCategory="image"
+                        accentColor="cyan"
+                        buttonLabel="Upload Cover Image"
+                        onSuccess={(newPath) => {
+                          setForm((prev) => {
+                            if (!prev) return prev;
+                            return {
+                              ...prev,
+                              images: {
+                                ...prev.images,
+                                main: newPath,
+                                gallery: prev.images?.gallery || [],
+                              },
+                            };
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                      <MediaImportControl
+                        currentValue={form.images?.main}
+                        targetType="project"
+                        targetId={form.id}
+                        slot="main"
+                        accentColor="cyan"
+                        buttonLabel="Import & Replace"
+                        placeholder="Paste image URL or public Google Drive link..."
+                        onSuccess={(newPath, _publicUrl, allocatedId) => {
+                          setForm((prev) => {
+                            if (!prev) return prev;
+                            return {
+                              ...prev,
+                              id: prev.id || allocatedId || prev.id,
+                              images: {
+                                ...prev.images,
+                                main: newPath,
+                                gallery: prev.images?.gallery || [],
+                              },
+                            };
+                          });
+                        }}
+                      />
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-mono text-white/40 uppercase shrink-0">Path:</span>
                       <input
@@ -585,21 +607,38 @@ function ProjectEditorModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
                       <div className="sm:col-span-8 space-y-3">
-                        <MediaImportControl
-                          currentValue={galleryUrl}
-                          targetType="project"
-                          targetId={form.id}
-                          slot={String(slotIdx + 1)}
-                          accentColor="cyan"
-                          buttonLabel="Import & Replace"
-                          placeholder="Paste screenshot URL or public Google Drive link..."
-                          onSuccess={(newPath, _publicUrl, allocatedId) => {
-                            if (allocatedId && !form.id) {
-                              setForm((prev) => (prev ? { ...prev, id: allocatedId } : prev));
-                            }
-                            handleGalleryChange(slotIdx, newPath);
-                          }}
-                        />
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                          <MediaFileUpload
+                            targetType="project"
+                            targetId={form.id}
+                            slot={String(slotIdx + 1)}
+                            mediaCategory="image"
+                            accentColor="cyan"
+                            buttonLabel={`Upload Screenshot ${slotIdx + 1}`}
+                            onSuccess={(newPath) => {
+                              handleGalleryChange(slotIdx, newPath);
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                          <MediaImportControl
+                            currentValue={galleryUrl}
+                            targetType="project"
+                            targetId={form.id}
+                            slot={String(slotIdx + 1)}
+                            accentColor="cyan"
+                            buttonLabel="Import & Replace"
+                            placeholder="Paste screenshot URL or public Google Drive link..."
+                            onSuccess={(newPath, _publicUrl, allocatedId) => {
+                              if (allocatedId && !form.id) {
+                                setForm((prev) => (prev ? { ...prev, id: allocatedId } : prev));
+                              }
+                              handleGalleryChange(slotIdx, newPath);
+                            }}
+                          />
+                        </div>
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-mono text-white/40 uppercase shrink-0">Path:</span>
                           <input
@@ -626,7 +665,7 @@ function ProjectEditorModal({
             <div className="space-y-5">
               <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs text-purple-300">
                 Attach an optional video to this project. Accepted formats: MP4, WebM, MOV, M4V (max 100 MB).
-                The video will be associated with this project's permanent ID folder.
+                The video will be associated with this project&apos;s permanent ID folder.
               </div>
 
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-4">
@@ -1032,24 +1071,40 @@ function CertificateEditorModal({
             <label className="font-mono text-white/50 block">CREDENTIAL / CERTIFICATE IMAGE</label>
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
               <div className="sm:col-span-8 space-y-2">
-                <MediaImportControl
-                  currentValue={form.image}
-                  targetType="certificate"
-                  targetId={form.id}
-                  accentColor="emerald"
-                  buttonLabel="Import & Replace"
-                  placeholder="Paste certificate image URL or public Google Drive link..."
-                  onSuccess={(newPath, _publicUrl, allocatedId) => {
-                    setForm((prev) => {
-                      if (!prev) return prev;
-                      return {
-                        ...prev,
-                        id: prev.id || allocatedId || prev.id,
-                        image: newPath,
-                      };
-                    });
-                  }}
-                />
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                  <MediaFileUpload
+                    targetType="certificate"
+                    targetId={form.id}
+                    mediaCategory="image"
+                    accentColor="emerald"
+                    buttonLabel="Upload Certificate Image"
+                    onSuccess={(newPath) => {
+                      setForm((prev) => (prev ? { ...prev, image: newPath } : prev));
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                  <MediaImportControl
+                    currentValue={form.image}
+                    targetType="certificate"
+                    targetId={form.id}
+                    accentColor="emerald"
+                    buttonLabel="Import & Replace"
+                    placeholder="Paste certificate image URL or public Google Drive link..."
+                    onSuccess={(newPath, _publicUrl, allocatedId) => {
+                      setForm((prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          id: prev.id || allocatedId || prev.id,
+                          image: newPath,
+                        };
+                      });
+                    }}
+                  />
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-mono text-white/40 uppercase shrink-0">Path:</span>
                   <input
@@ -2118,6 +2173,59 @@ export function AdminDashboard() {
     type: 'Project' | 'Certificate' | 'Skill' | 'Education' | 'Experience' | 'Achievement';
   } | null>(null);
 
+  // Passkey reveal state (Requirement 12)
+  const [isPasskeyModalOpen, setIsPasskeyModalOpen] = useState(false);
+  const [revealCode, setRevealCode] = useState('');
+  const [revealedPasskey, setRevealedPasskey] = useState<string | null>(null);
+  const [revealError, setRevealError] = useState<string | null>(null);
+  const [revealLoading, setRevealLoading] = useState(false);
+  const [revealCountdown, setRevealCountdown] = useState(0);
+
+  // Auto-hide timer for revealed passkey (30s)
+  useEffect(() => {
+    if (revealCountdown <= 0) {
+      if (revealedPasskey) setRevealedPasskey(null);
+      return;
+    }
+    const timer = setInterval(() => {
+      setRevealCountdown((prev) => {
+        if (prev <= 1) {
+          setRevealedPasskey(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [revealCountdown, revealedPasskey]);
+
+  const handleRevealPasskey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRevealError(null);
+    setRevealLoading(true);
+    try {
+      const res = await fetch('/api/admin/auth/reveal-passkey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: revealCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setRevealError(data.error || 'Authorization failed.');
+        return;
+      }
+      setRevealedPasskey(data.passkey);
+      setRevealCountdown(30);
+      setIsPasskeyModalOpen(false);
+      setRevealCode('');
+      notify('Passkey authorized for temporary display (30s).');
+    } catch {
+      setRevealError('Network error connecting to authorization server.');
+    } finally {
+      setRevealLoading(false);
+    }
+  };
+
   const notify = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3500);
@@ -2130,8 +2238,9 @@ export function AdminDashboard() {
 
   // ── Project Actions ────────────────────────────────────────────────────────
   const handleOpenAddProject = () => {
+    const nextId = contentRepository.getNextProjectId();
     const draft: ProjectItem = {
-      id: '',
+      id: nextId,
       slug: '',
       number: '',
       title: 'New Engineering Project',
@@ -2159,12 +2268,32 @@ export function AdminDashboard() {
   };
 
   const handleSaveProject = (proj: ProjectItem) => {
-    if (!proj.id) {
+    const exists = allProjects.some((p) => p.id === proj.id);
+    if (!exists) {
       const created = createProject(proj);
       notify(`Project "${created.title}" created with permanent ID ${created.id}`);
     } else {
+      const oldProj = allProjects.find((p) => p.id === proj.id);
       const updated = updateProject(proj.id, proj);
       notify(`Project "${updated.title}" updated successfully.`);
+
+      // Post-save cleanup for old media if replaced
+      if (oldProj) {
+        if (oldProj.images?.main && oldProj.images.main !== proj.images?.main) {
+          fetch('/api/admin/media/cleanup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ oldPath: oldProj.images.main, newPath: proj.images?.main }),
+          }).catch(() => {});
+        }
+        if (oldProj.videoUrl && oldProj.videoUrl !== proj.videoUrl) {
+          fetch('/api/admin/media/cleanup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ oldPath: oldProj.videoUrl, newPath: proj.videoUrl }),
+          }).catch(() => {});
+        }
+      }
     }
     setIsProjectModalOpen(false);
     setEditingProject(null);
@@ -2184,8 +2313,9 @@ export function AdminDashboard() {
 
   // ── Certificate Actions ───────────────────────────────────────────────────
   const handleOpenAddCertificate = () => {
+    const nextId = contentRepository.getNextCertificateId();
     const draft: CertificateItem = {
-      id: '',
+      id: nextId,
       number: '',
       title: 'New Technical Certification',
       issuer: 'Certification Authority',
@@ -2201,12 +2331,23 @@ export function AdminDashboard() {
   };
 
   const handleSaveCertificate = (cert: CertificateItem) => {
-    if (!cert.id) {
+    const exists = allCertificates.some((c) => c.id === cert.id);
+    if (!exists) {
       const created = createCertificate(cert);
       notify(`Certificate "${created.title}" created with permanent ID ${created.id}`);
     } else {
+      const oldCert = allCertificates.find((c) => c.id === cert.id);
       const updated = updateCertificate(cert.id, cert);
       notify(`Certificate "${updated.title}" updated.`);
+
+      // Post-save cleanup for old certificate image if replaced
+      if (oldCert && oldCert.image && oldCert.image !== cert.image) {
+        fetch('/api/admin/media/cleanup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldPath: oldCert.image, newPath: cert.image }),
+        }).catch(() => {});
+      }
     }
     setIsCertModalOpen(false);
     setEditingCertificate(null);
@@ -2408,9 +2549,9 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans flex flex-col selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen md:h-screen md:overflow-hidden bg-black text-white font-sans flex flex-col selection:bg-cyan-500 selection:text-black">
       {/* Top Admin Navbar */}
-      <header className="border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
+      <header className="border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50 shrink-0 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
             <ShieldCheck className="w-5 h-5" />
@@ -2460,9 +2601,9 @@ export function AdminDashboard() {
       </AnimatePresence>
 
       {/* Main Admin Body */}
-      <div className="flex-1 flex flex-col md:flex-row">
-        {/* Left Sidebar Navigation */}
-        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-zinc-950/40 p-3 sm:p-4 flex flex-row overflow-x-auto md:flex-col gap-1.5 md:space-y-1 shrink-0 scrollbar-none">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+        {/* Left Sidebar Navigation - Stationary on Desktop */}
+        <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/10 bg-zinc-950/40 p-3 sm:p-4 flex flex-row overflow-x-auto md:flex-col gap-1.5 md:space-y-1 shrink-0 scrollbar-none md:overflow-y-auto md:h-full">
           {[
             { id: 'DASHBOARD', label: 'Overview', icon: LayoutDashboard },
             { id: 'PROJECTS', label: 'Projects', icon: FolderGit2, badge: allProjects.length },
@@ -2507,8 +2648,8 @@ export function AdminDashboard() {
           })}
         </aside>
 
-        {/* Right Content Area */}
-        <main className="flex-1 p-4 sm:p-6 md:p-10 max-w-5xl overflow-x-hidden min-w-0">
+        {/* Right Content Area - Independently Scrollable */}
+        <main className="flex-1 p-4 sm:p-6 md:p-10 max-w-5xl overflow-x-hidden min-w-0 md:overflow-y-auto md:h-full">
           {/* TAB 1: DASHBOARD */}
           {activeTab === 'DASHBOARD' && (
             <div className="space-y-8">
@@ -3230,6 +3371,23 @@ export function AdminDashboard() {
               </div>
 
               <div className="p-6 rounded-2xl bg-zinc-950 border border-white/10 space-y-5">
+                {/* Direct Local Document Upload */}
+                <div className="space-y-2">
+                  <label className="text-xs font-mono uppercase tracking-wider text-white/50">
+                    UPLOAD RESUME FROM DEVICE (PDF, DOCX, DOC, ODT, RTF, TXT)
+                  </label>
+                  <MediaFileUpload
+                    targetType="resume"
+                    mediaCategory="document"
+                    accentColor="cyan"
+                    buttonLabel="Upload Resume Document"
+                    onSuccess={(newPath) => {
+                      setResumePath(newPath);
+                      notify('Resume document uploaded as draft. Click Save Resume Path to apply.');
+                    }}
+                  />
+                </div>
+
                 <div className="space-y-3">
                   <label className="text-xs font-mono uppercase tracking-wider text-white/50">
                     IMPORT RESUME (DIRECT PDF URL OR GOOGLE DRIVE)
@@ -3238,12 +3396,11 @@ export function AdminDashboard() {
                     currentValue={resumePath}
                     targetType="resume"
                     accentColor="cyan"
-                    buttonLabel="Import & Save PDF"
+                    buttonLabel="Import & Replace PDF"
                     placeholder="Paste direct PDF URL or public Google Drive PDF link..."
                     onSuccess={(newPath) => {
                       setResumePath(newPath);
-                      updateResume(newPath);
-                      notify('Resume PDF imported and saved successfully.');
+                      notify('Resume imported as draft. Click Save Resume Path to apply.');
                     }}
                   />
                 </div>
@@ -3265,8 +3422,16 @@ export function AdminDashboard() {
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => {
+                      const oldResume = resume.path;
                       updateResume(resumePath);
                       notify('Resume path updated successfully.');
+                      if (oldResume && oldResume !== resumePath) {
+                        fetch('/api/admin/media/cleanup', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ oldPath: oldResume, newPath: resumePath }),
+                        }).catch(() => {});
+                      }
                     }}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black text-xs font-mono font-bold cursor-pointer transition-colors"
                   >
@@ -3551,19 +3716,38 @@ export function AdminDashboard() {
                     <h4 className="text-sm font-semibold text-white">Profile Portrait</h4>
                     <span className="text-[11px] font-mono text-cyan-400">Hero &amp; Personal Identity</span>
                   </div>
-                  <MediaImportControl
-                    currentValue={mediaForm.portrait}
-                    targetType="profile"
-                    accentColor="cyan"
-                    buttonLabel="Import & Replace Portrait"
-                    placeholder="Paste image URL or public Google Drive link..."
-                    onSuccess={(newPath) => {
-                      const updated = { ...mediaForm, portrait: newPath };
-                      setMediaForm(updated);
-                      updateMedia(updated);
-                      notify('Profile portrait updated and saved successfully.');
-                    }}
-                  />
+
+                  {/* Direct File Upload */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                    <MediaFileUpload
+                      targetType="profile"
+                      mediaCategory="image"
+                      accentColor="cyan"
+                      buttonLabel="Upload Profile Portrait"
+                      onSuccess={(newPath) => {
+                        setMediaForm((prev) => ({ ...prev, portrait: newPath }));
+                        notify('Profile portrait staged. Click Save Media Mappings to commit.');
+                      }}
+                    />
+                  </div>
+
+                  {/* Remote URL / Google Drive Import */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                    <MediaImportControl
+                      currentValue={mediaForm.portrait}
+                      targetType="profile"
+                      accentColor="cyan"
+                      buttonLabel="Import & Replace Portrait"
+                      placeholder="Paste image URL or public Google Drive link..."
+                      onSuccess={(newPath) => {
+                        setMediaForm((prev) => ({ ...prev, portrait: newPath }));
+                        notify('Profile portrait staged. Click Save Media Mappings to commit.');
+                      }}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-1">
                     <div className="sm:col-span-9 space-y-1">
                       <span className="text-[10px] font-mono text-white/40 uppercase">Storage Path</span>
@@ -3596,10 +3780,8 @@ export function AdminDashboard() {
                       accentColor="cyan"
                       buttonLabel="Upload Self-Intro Video"
                       onSuccess={(newPath) => {
-                        const updated = { ...mediaForm, selfIntroVideo: newPath };
-                        setMediaForm(updated);
-                        updateMedia(updated);
-                        notify('Self-introduction video uploaded and saved successfully.');
+                        setMediaForm((prev) => ({ ...prev, selfIntroVideo: newPath }));
+                        notify('Self-intro video staged. Click Save Media Mappings to commit.');
                       }}
                     />
                   </div>
@@ -3614,10 +3796,8 @@ export function AdminDashboard() {
                       buttonLabel="Import & Replace Video"
                       placeholder="Paste video URL (MP4) or public Google Drive link..."
                       onSuccess={(newPath) => {
-                        const updated = { ...mediaForm, selfIntroVideo: newPath };
-                        setMediaForm(updated);
-                        updateMedia(updated);
-                        notify('Self-introduction video updated and saved successfully.');
+                        setMediaForm((prev) => ({ ...prev, selfIntroVideo: newPath }));
+                        notify('Self-intro video staged. Click Save Media Mappings to commit.');
                       }}
                     />
                   </div>
@@ -3652,10 +3832,8 @@ export function AdminDashboard() {
                       accentColor="purple"
                       buttonLabel="Upload Desktop Intro Video"
                       onSuccess={(newPath) => {
-                        const updated = { ...mediaForm, introVideo: newPath };
-                        setMediaForm(updated);
-                        updateMedia(updated);
-                        notify('Desktop intro video uploaded and deployed successfully.');
+                        setMediaForm((prev) => ({ ...prev, introVideo: newPath }));
+                        notify('Desktop intro video staged. Click Save Media Mappings to commit.');
                       }}
                     />
                   </div>
@@ -3670,10 +3848,8 @@ export function AdminDashboard() {
                       buttonLabel="Import & Replace Desktop Video"
                       placeholder="Paste desktop intro MP4 URL or public Google Drive link..."
                       onSuccess={(newPath) => {
-                        const updated = { ...mediaForm, introVideo: newPath };
-                        setMediaForm(updated);
-                        updateMedia(updated);
-                        notify('Desktop intro video updated and deployed to storage successfully.');
+                        setMediaForm((prev) => ({ ...prev, introVideo: newPath }));
+                        notify('Desktop intro video staged. Click Save Media Mappings to commit.');
                       }}
                     />
                   </div>
@@ -3708,10 +3884,8 @@ export function AdminDashboard() {
                       accentColor="purple"
                       buttonLabel="Upload Mobile Intro Video"
                       onSuccess={(newPath) => {
-                        const updated = { ...mediaForm, mobileIntroVideo: newPath };
-                        setMediaForm(updated);
-                        updateMedia(updated);
-                        notify('Mobile intro video uploaded and deployed successfully.');
+                        setMediaForm((prev) => ({ ...prev, mobileIntroVideo: newPath }));
+                        notify('Mobile intro video staged. Click Save Media Mappings to commit.');
                       }}
                     />
                   </div>
@@ -3726,10 +3900,8 @@ export function AdminDashboard() {
                       buttonLabel="Import & Replace Mobile Video"
                       placeholder="Paste mobile intro MP4 URL or public Google Drive link..."
                       onSuccess={(newPath) => {
-                        const updated = { ...mediaForm, mobileIntroVideo: newPath };
-                        setMediaForm(updated);
-                        updateMedia(updated);
-                        notify('Mobile intro video updated and deployed to storage successfully.');
+                        setMediaForm((prev) => ({ ...prev, mobileIntroVideo: newPath }));
+                        notify('Mobile intro video staged. Click Save Media Mappings to commit.');
                       }}
                     />
                   </div>
@@ -3748,6 +3920,110 @@ export function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* Background Music Management Card (Requirement 5) */}
+                <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-white">Background Music</h4>
+                      <p className="text-[11px] font-mono text-white/40">
+                        Atmospheric soundtrack started upon clicking &ldquo;Enter the World&rdquo;
+                      </p>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <span className="text-[11px] font-mono text-white/50">Playback:</span>
+                      <input
+                        type="checkbox"
+                        checked={mediaForm.backgroundMusicEnabled !== false}
+                        onChange={(e) =>
+                          setMediaForm((prev) => ({ ...prev, backgroundMusicEnabled: e.target.checked }))
+                        }
+                        className="w-4 h-4 accent-cyan-400 rounded cursor-pointer"
+                      />
+                      <span className={`text-xs font-mono font-bold ${mediaForm.backgroundMusicEnabled !== false ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {mediaForm.backgroundMusicEnabled !== false ? 'ENABLED' : 'DISABLED'}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Direct File Upload */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Upload Audio from Device</span>
+                    <MediaFileUpload
+                      targetType="music"
+                      mediaCategory="audio"
+                      accentColor="cyan"
+                      buttonLabel="Upload Background Music"
+                      onSuccess={(newPath) => {
+                        setMediaForm((prev) => ({ ...prev, backgroundMusic: newPath }));
+                        notify('Background music staged. Click Save Media Mappings to commit.');
+                      }}
+                    />
+                  </div>
+
+                  {/* Remote URL / Google Drive Import */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                    <MediaImportControl
+                      currentValue={mediaForm.backgroundMusic || '/media/back_music/pirate.mp3'}
+                      targetType="music"
+                      accentColor="cyan"
+                      buttonLabel="Import & Replace Audio"
+                      placeholder="Paste audio URL or public Google Drive link..."
+                      onSuccess={(newPath) => {
+                        setMediaForm((prev) => ({ ...prev, backgroundMusic: newPath }));
+                        notify('Background music staged. Click Save Media Mappings to commit.');
+                      }}
+                    />
+                  </div>
+
+                  {/* Audio Preview & Controls */}
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-3">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-white/60">Audio Preview:</span>
+                      <span className="text-cyan-400 truncate max-w-xs">{mediaForm.backgroundMusic || '/media/back_music/pirate.mp3'}</span>
+                    </div>
+                    <audio
+                      controls
+                      src={mediaForm.backgroundMusic || '/media/back_music/pirate.mp3'}
+                      className="w-full h-8"
+                    />
+
+                    {/* Volume Slider */}
+                    <div className="flex items-center justify-between gap-4 pt-2 border-t border-white/5">
+                      <span className="text-[11px] font-mono text-white/50">Default Master Volume:</span>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={mediaForm.backgroundMusicVolume ?? 0.35}
+                          onChange={(e) =>
+                            setMediaForm((prev) => ({
+                              ...prev,
+                              backgroundMusicVolume: parseFloat(e.target.value),
+                            }))
+                          }
+                          className="w-32 accent-cyan-400 cursor-pointer"
+                        />
+                        <span className="text-xs font-mono font-bold text-white w-10 text-right">
+                          {Math.round((mediaForm.backgroundMusicVolume ?? 0.35) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] font-mono text-white/40 uppercase">Authoritative Track Path</span>
+                    <input
+                      type="text"
+                      value={mediaForm.backgroundMusic || '/media/back_music/pirate.mp3'}
+                      onChange={(e) => setMediaForm({ ...mediaForm, backgroundMusic: e.target.value })}
+                      className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
+                    />
+                  </div>
+                </div>
+
                 {/* Media Directories */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-2">
@@ -3761,9 +4037,38 @@ export function AdminDashboard() {
                 </div>
 
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    const oldMedia = media;
                     updateMedia(mediaForm);
-                    notify('Media asset mappings saved successfully.');
+
+                    // Sync music store state
+                    if (mediaForm.backgroundMusic) {
+                      useMusicStore.getState().setTrackUrl(mediaForm.backgroundMusic);
+                    }
+                    if (typeof mediaForm.backgroundMusicVolume === 'number') {
+                      useMusicStore.getState().setVolume(mediaForm.backgroundMusicVolume);
+                    }
+                    if (typeof mediaForm.backgroundMusicEnabled === 'boolean') {
+                      useMusicStore.getState().setEnabled(mediaForm.backgroundMusicEnabled);
+                    }
+
+                    // Trigger storage cleanup for replaced media
+                    const replacedPaths: string[] = [];
+                    if (oldMedia.portrait && oldMedia.portrait !== mediaForm.portrait) replacedPaths.push(oldMedia.portrait);
+                    if (oldMedia.selfIntroVideo && oldMedia.selfIntroVideo !== mediaForm.selfIntroVideo) replacedPaths.push(oldMedia.selfIntroVideo);
+                    if (oldMedia.introVideo && oldMedia.introVideo !== mediaForm.introVideo) replacedPaths.push(oldMedia.introVideo);
+                    if (oldMedia.mobileIntroVideo && oldMedia.mobileIntroVideo !== mediaForm.mobileIntroVideo) replacedPaths.push(oldMedia.mobileIntroVideo);
+                    if (oldMedia.backgroundMusic && oldMedia.backgroundMusic !== mediaForm.backgroundMusic) replacedPaths.push(oldMedia.backgroundMusic);
+
+                    for (const oldPath of replacedPaths) {
+                      fetch('/api/admin/media/cleanup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ oldMediaUrl: oldPath }),
+                      }).catch(() => {});
+                    }
+
+                    notify('Media asset mappings saved and deployed successfully.');
                   }}
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black text-xs font-mono font-bold cursor-pointer transition-colors"
                 >
@@ -3787,8 +4092,43 @@ export function AdminDashboard() {
                 <h3 className="text-xs font-mono uppercase tracking-widest text-white/60">Configured Variables</h3>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                    <span className="text-white/60">ADMIN_PASSKEY</span>
-                    <span className="text-emerald-400 font-bold">aswith-enter4</span>
+                    <div className="space-y-0.5">
+                      <span className="text-white/60">ADMIN_PASSKEY</span>
+                      <p className="text-[10px] text-white/30">Master administrator access credential</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`font-mono font-bold ${revealedPasskey ? 'text-emerald-400' : 'text-white/50 tracking-widest'}`}>
+                        {revealedPasskey || '••••••••'}
+                      </span>
+                      {revealedPasskey ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-amber-400 font-mono">({revealCountdown}s)</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRevealedPasskey(null);
+                              setRevealCountdown(0);
+                            }}
+                            className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white text-[11px] font-mono cursor-pointer transition-colors"
+                          >
+                            Hide
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRevealCode('');
+                            setRevealError(null);
+                            setIsPasskeyModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 text-xs font-mono cursor-pointer transition-colors flex items-center gap-1.5"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Show Passkey</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
                     <span className="text-white/60">CONTACT_TO_EMAIL</span>
@@ -3894,6 +4234,78 @@ export function AdminDashboard() {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* Protected Passkey Reveal Modal (Requirement 12) */}
+      <AnimatePresence>
+        {isPasskeyModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-zinc-950 border border-cyan-500/30 rounded-2xl p-6 shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <ShieldCheck className="w-5 h-5" />
+                  <h3 className="text-sm font-semibold text-white">Authorize Passkey Reveal</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPasskeyModalOpen(false)}
+                  className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-white/60">
+                To protect system secrets against unauthorized viewing, enter your 4-digit verification code to reveal the master administrator passkey.
+              </p>
+
+              <form onSubmit={handleRevealPasskey} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono uppercase text-white/50">Verification Code</label>
+                  <input
+                    type="password"
+                    maxLength={10}
+                    value={revealCode}
+                    onChange={(e) => setRevealCode(e.target.value)}
+                    placeholder="Enter 4-digit code"
+                    autoFocus
+                    required
+                    className="w-full bg-white/5 border border-white/15 focus:border-cyan-400 rounded-lg p-3 text-center text-lg tracking-widest font-mono text-white outline-none"
+                  />
+                </div>
+
+                {revealError && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{revealError}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPasskeyModalOpen(false)}
+                    className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={revealLoading || !revealCode}
+                    className="px-5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-semibold text-xs font-mono cursor-pointer flex items-center gap-2"
+                  >
+                    {revealLoading ? 'Verifying...' : 'Authorize & Reveal'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
