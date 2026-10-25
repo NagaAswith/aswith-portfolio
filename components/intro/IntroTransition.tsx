@@ -88,20 +88,20 @@ export function IntroTransition() {
             }}
           />
 
-          {/* Full-black reveal layer — rises during TRANSITIONING, falls during PORTFOLIO_REVEAL */}
+          {/* Cinematic atmospheric reveal layer — softens transition smoothly without creating a pitch-black screen */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{
               opacity:
                 introState === 'TRANSITIONING'
-                  ? 1
+                  ? 0.35
                   : 0,
             }}
             transition={{
-              duration: introState === 'TRANSITIONING' ? 0.5 : 0.9,
-              ease: introState === 'TRANSITIONING' ? 'easeIn' : 'easeOut',
+              duration: introState === 'TRANSITIONING' ? 0.5 : 0.8,
+              ease: 'easeOut',
             }}
-            className="absolute inset-0 bg-black pointer-events-none"
+            className="absolute inset-0 bg-black/40 pointer-events-none"
           />
         </div>
       )}

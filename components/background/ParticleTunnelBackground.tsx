@@ -3,22 +3,27 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { usePerformanceStore } from '@/store/usePerformanceStore';
 import { useIntroStore } from '@/store/useIntroStore';
+import { resolveSupabaseMediaUrl } from '@/lib/storage/supabaseMedia';
 
 const PARTICLE_TUNNEL_ASSET = '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4';
+const BASE_RATE = 1.0;
+const MAX_RATE = 2.3;
 
 /**
  * ParticleTunnelBackground
  *
- * Implements Requirement 4:
- * - Scroll-driven video timeline synchronization (scroll down advances video, scroll up reverses it).
- * - Smooth frame updates via requestAnimationFrame and asynchronous seek locking.
- * - Coordinated premium white-and-blue visual system with icy blue, electric blue, soft gradients, and deep navy accents.
- * - Full text readability preserved over moving background via translucent optical diffusion layers.
- * - Respects prefers-reduced-motion and provides graceful degradation on unsupported devices.
- * - Does not block page load or interfere with 3D Digital Twin canvas.
+ * Implements Master Directive Stage Three:
+ * - Continuous playback at normal speed when page is stationary (never freezes).
+ * - Smooth scroll-responsive speed increase based on scroll velocity.
+ * - Smooth deceleration back to normal continuous playback when scrolling stops.
+ * - Hardware-accelerated continuous playback without frame scrubbing or seeking.
+ * - Bounded dynamic energy scaling for a cinematic warp-tunnel effect.
+ * - Coordinated icy blue & navy visual atmosphere preserving full text contrast.
+ * - Graceful degradation and prefers-reduced-motion support.
  */
 export function ParticleTunnelBackground() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePerformanceStore((state) => state.reducedMotion);
   const introState = useIntroStore((state) => state.introState);
   const isPortfolioVisible =
@@ -27,75 +32,103 @@ export function ParticleTunnelBackground() {
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [hasDecodeError, setHasDecodeError] = useState(false);
 
-  const durationRef = useRef<number>(0);
-  const targetTimeRef = useRef<number>(0);
-  const currentTimeRef = useRef<number>(0);
-  const isSeekingRef = useRef<boolean>(false);
+  // Motion energy refs for zero-overhead animation loop
+  const scrollEnergyRef = useRef<number>(0);
+  const lastScrollYRef = useRef<number>(0);
+  const lastScrollTimeRef = useRef<number>(0);
+  const currentRateRef = useRef<number>(BASE_RATE);
   const animFrameRef = useRef<number | null>(null);
 
-  // 1. Load video metadata
+  const resolvedCloudUrl = resolveSupabaseMediaUrl(PARTICLE_TUNNEL_ASSET);
+
+  // 1. Loaded metadata: start continuous playback immediately
   const handleLoadedMetadata = useCallback(() => {
-    if (videoRef.current && videoRef.current.duration) {
-      durationRef.current = videoRef.current.duration;
-      setIsVideoReady(true);
-      // Ensure video is paused so it only responds to scroll timeline
-      videoRef.current.pause();
+    const video = videoRef.current;
+    if (video) {
+      video.playbackRate = BASE_RATE;
+      video
+        .play()
+        .then(() => {
+          setIsVideoReady(true);
+        })
+        .catch(() => {
+          // Autoplay fallback (muted video)
+          video.muted = true;
+          video.play().then(() => setIsVideoReady(true)).catch(() => {});
+        });
     }
   }, []);
 
   const handleVideoError = useCallback(() => {
-    console.warn('Particle tunnel background video unavailable or decode failed. Falling back to dynamic gradient.');
+    console.warn('Particle tunnel background video error. Falling back to ambient gradient.');
     setHasDecodeError(true);
   }, []);
 
-  const handleSeeked = useCallback(() => {
-    isSeekingRef.current = false;
-  }, []);
-
-  // 2. Scroll event listener: maps scroll progress to video timeline
+  // 2. Track scroll velocity and convert to responsive visual energy
   useEffect(() => {
     if (typeof window === 'undefined' || reducedMotion || hasDecodeError) return;
 
-    const handleScroll = () => {
-      const scrollY = window.scrollY || window.pageYOffset || 0;
-      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      const progress = Math.min(1, Math.max(0, scrollY / maxScroll));
+    lastScrollYRef.current = window.scrollY || window.pageYOffset || 0;
+    lastScrollTimeRef.current = performance.now();
 
-      if (durationRef.current > 0) {
-        targetTimeRef.current = progress * durationRef.current;
-      }
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY || window.pageYOffset || 0;
+      const now = performance.now();
+      const dt = Math.max(16, now - lastScrollTimeRef.current);
+      const dy = Math.abs(currentScrollY - lastScrollYRef.current);
+
+      lastScrollYRef.current = currentScrollY;
+      lastScrollTimeRef.current = now;
+
+      // Calculate instantaneous scroll velocity (px / ms)
+      const velocity = dy / dt;
+      // Add bounded energy spike (smoothly capped)
+      const energyDelta = Math.min(1.0, velocity * 0.45);
+      scrollEnergyRef.current = Math.min(1.0, scrollEnergyRef.current + energyDelta);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, [reducedMotion, hasDecodeError]);
 
-  // 3. requestAnimationFrame loop: smooth interpolation and frame seeking without collision
+  // 3. requestAnimationFrame loop: continuous smooth playback rate lerp + subtle energy scale
   useEffect(() => {
-    if (typeof window === 'undefined' || reducedMotion || hasDecodeError) return;
+    if (typeof window === 'undefined' || hasDecodeError) return;
+
+    let isRunning = true;
 
     const render = () => {
+      if (!isRunning) return;
+
       const video = videoRef.current;
-      if (video && durationRef.current > 0 && !isSeekingRef.current && !video.seeking) {
-        const target = targetTimeRef.current;
-        const current = video.currentTime;
-        const diff = target - current;
+      if (video && !reducedMotion) {
+        // Smooth exponential energy decay
+        scrollEnergyRef.current *= 0.92;
+        if (scrollEnergyRef.current < 0.005) {
+          scrollEnergyRef.current = 0;
+        }
 
-        // Apply a gentle threshold to avoid microscopic seeks that choke GPU/decoder
-        if (Math.abs(diff) > 0.035) {
-          // Smooth step towards target time
-          const nextTime = current + diff * 0.25;
-          const clampedTime = Math.min(durationRef.current - 0.01, Math.max(0, nextTime));
+        // Target playback rate: BASE_RATE (1.0x) + velocity boost (up to 2.3x)
+        const targetRate = BASE_RATE + scrollEnergyRef.current * (MAX_RATE - BASE_RATE);
+        currentRateRef.current += (targetRate - currentRateRef.current) * 0.12;
 
+        if (Math.abs(video.playbackRate - currentRateRef.current) > 0.02) {
           try {
-            isSeekingRef.current = true;
-            video.currentTime = clampedTime;
-            currentTimeRef.current = clampedTime;
+            video.playbackRate = currentRateRef.current;
           } catch {
-            isSeekingRef.current = false;
+            // Ignore browser playback rate set exceptions
           }
+        }
+
+        // Apply subtle bounded optical energy scale (max 4% zoom on high speed scroll)
+        if (containerRef.current) {
+          const scale = 1 + scrollEnergyRef.current * 0.035;
+          containerRef.current.style.transform = `scale(${scale.toFixed(4)})`;
+        }
+
+        // Keep video playing continuously when tab is visible
+        if (video.paused && !document.hidden && isPortfolioVisible) {
+          video.play().catch(() => {});
         }
       }
 
@@ -105,9 +138,29 @@ export function ParticleTunnelBackground() {
     animFrameRef.current = requestAnimationFrame(render);
 
     return () => {
+      isRunning = false;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [reducedMotion, hasDecodeError]);
+  }, [reducedMotion, hasDecodeError, isPortfolioVisible]);
+
+  // 4. Page visibility listener: pause when tab hidden to save GPU, resume when focused
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const handleVisibilityChange = () => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      if (document.hidden) {
+        video.pause();
+      } else if (isPortfolioVisible) {
+        video.play().catch(() => {});
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isPortfolioVisible]);
 
   return (
     <div
@@ -118,26 +171,36 @@ export function ParticleTunnelBackground() {
         transition: 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      {/* Scroll-Driven Video Layer */}
-      {!hasDecodeError && (
-        <video
-          ref={videoRef}
-          src={PARTICLE_TUNNEL_ASSET}
-          preload="metadata"
-          muted
-          playsInline
-          webkit-playsinline="true"
-          disablePictureInPicture
-          onLoadedMetadata={handleLoadedMetadata}
-          onError={handleVideoError}
-          onSeeked={handleSeeked}
-          className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
-          style={{
-            opacity: isVideoReady ? 0.38 : 0,
-            filter: 'contrast(1.1) brightness(1.05) saturate(1.2)',
-          }}
-        />
-      )}
+      {/* Dynamic Energy Scaled Video Container */}
+      <div
+        ref={containerRef}
+        className="absolute inset-0 w-full h-full will-change-transform transition-transform duration-150 ease-out"
+        style={{ transformOrigin: 'center center' }}
+      >
+        {!hasDecodeError && (
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            webkit-playsinline="true"
+            disablePictureInPicture
+            preload="auto"
+            onLoadedMetadata={handleLoadedMetadata}
+            onError={handleVideoError}
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{
+              opacity: isVideoReady ? 0.45 : 0,
+              filter: 'contrast(1.12) brightness(1.06) saturate(1.22)',
+              transition: 'opacity 1.2s ease-out',
+            }}
+          >
+            <source src={resolvedCloudUrl} type="video/mp4" />
+            <source src={PARTICLE_TUNNEL_ASSET} type="video/mp4" />
+          </video>
+        )}
+      </div>
 
       {/* ── WHITE & BLUE VISUAL SYSTEM OVERLAYS ── */}
 
@@ -146,7 +209,7 @@ export function ParticleTunnelBackground() {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(circle at 50% 15%, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.08) 35%, transparent 70%)',
+            'radial-gradient(circle at 50% 18%, rgba(56, 189, 248, 0.16) 0%, rgba(14, 165, 233, 0.06) 40%, transparent 75%)',
         }}
       />
 
@@ -155,7 +218,7 @@ export function ParticleTunnelBackground() {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 50%, rgba(3, 7, 18, 0.45) 0%, rgba(2, 6, 23, 0.75) 60%, rgba(1, 4, 14, 0.94) 100%)',
+            'radial-gradient(ellipse at 50% 50%, rgba(3, 7, 18, 0.38) 0%, rgba(2, 6, 23, 0.68) 60%, rgba(1, 4, 14, 0.88) 100%)',
         }}
       />
 
@@ -164,7 +227,7 @@ export function ParticleTunnelBackground() {
         className="absolute bottom-0 inset-x-0 h-[35vh] pointer-events-none"
         style={{
           background:
-            'linear-gradient(to top, rgba(14, 165, 233, 0.08) 0%, rgba(3, 7, 18, 0.6) 50%, transparent 100%)',
+            'linear-gradient(to top, rgba(14, 165, 233, 0.08) 0%, rgba(3, 7, 18, 0.45) 50%, transparent 100%)',
         }}
       />
 

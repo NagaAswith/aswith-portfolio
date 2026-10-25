@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Volume2 } from 'lucide-react';
 import { useIntroStore } from '@/store/useIntroStore';
 import { usePortfolioContent } from '@/store/usePortfolioContent';
 import { resolveSupabaseMediaUrl } from '@/lib/storage/supabaseMedia';
@@ -25,8 +24,6 @@ export function IntroVideo() {
     media?.mobileIntroVideo || '/media/mobileintro/Mobileintro.mp4'
   );
 
-  // Sound prompt state if browser autoplay policy blocks unmuted audio
-  const [isSoundBlocked, setIsSoundBlocked] = useState<boolean>(false);
   const [playbackFailed, setPlaybackFailed] = useState<boolean>(false);
   const hasEndedRef = useRef<boolean>(false);
 
@@ -75,7 +72,6 @@ export function IntroVideo() {
   const handleEnded = useCallback(() => {
     if (hasEndedRef.current) return;
     hasEndedRef.current = true;
-    setIsSoundBlocked(false);
     setIntroState('MESSAGE_READY');
   }, [setIntroState]);
 
@@ -86,7 +82,7 @@ export function IntroVideo() {
     handleEnded();
   }, [handleEnded]);
 
-  // Attempt playback on mount with unmuted sound first (Requirement 2)
+  // Attempt playback on mount with unmuted sound first (Requirement 4.2)
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -100,15 +96,13 @@ export function IntroVideo() {
         video.muted = false;
         await video.play();
         setMuted(false);
-        setIsSoundBlocked(false);
       } catch (err: unknown) {
-        // Autoplay with sound denied by browser policy -> fall back to muted and show prompt
-        console.info('Unmuted autoplay restricted by browser policy; starting muted with sound control.', err);
+        // Autoplay with sound denied by browser policy -> fall back cleanly to muted playback
+        console.info('Unmuted autoplay restricted by browser policy; starting muted.', err);
         try {
           video.muted = true;
           setMuted(true);
           await video.play();
-          setIsSoundBlocked(true);
         } catch (retryErr: unknown) {
           console.warn('Muted playback also failed, enabling recovery fallback.', retryErr);
           handlePlaybackError();
@@ -117,7 +111,33 @@ export function IntroVideo() {
     };
 
     startPlayback();
-  }, [activeVideoUrl, setMuted, handlePlaybackError]);
+
+    // Safe fallback timer: If playback stalls or metadata fails to fire ended, recover cleanly after generous upper bound
+    const failsafeTimer = setTimeout(() => {
+      if (!hasEndedRef.current) {
+        console.info('Intro safe fallback timer triggered.');
+        handleEnded();
+      }
+    }, 25000);
+
+    return () => clearTimeout(failsafeTimer);
+  }, [activeVideoUrl, setMuted, handlePlaybackError, handleEnded]);
+
+  // If initial audio autoplay was restricted, unmute upon user's first natural interaction
+  useEffect(() => {
+    if (introState !== 'INTRO_PLAYING' || !isMuted) return;
+
+    const handleFirstGesture = () => {
+      const video = videoRef.current;
+      if (video && video.muted) {
+        video.muted = false;
+        setMuted(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handleFirstGesture, { once: true });
+    return () => window.removeEventListener('pointerdown', handleFirstGesture);
+  }, [introState, isMuted, setMuted]);
 
   // Failsafe timer: only fires if video fails to complete within generous timeout
   useEffect(() => {
@@ -129,26 +149,6 @@ export function IntroVideo() {
     }, FAILSAFE_DURATION);
     return () => clearTimeout(failsafeTimer);
   }, [handleEnded]);
-
-  // Enable sound and restart video from beginning when user interacts with prompt
-  const handleEnableSound = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = false;
-    setMuted(false);
-    setIsSoundBlocked(false);
-    video.currentTime = 0;
-    video.play().catch((e) => console.warn('Could not replay with sound:', e));
-  };
-
-  // Skip directly to message ready if user chooses
-  const handleSkipIntro = () => {
-    const video = videoRef.current;
-    if (video) {
-      video.pause();
-    }
-    handleEnded();
-  };
 
   // Determine transition phase visibility
   const isBeforeTransition =
@@ -207,42 +207,6 @@ export function IntroVideo() {
         <source src={desktopVideoUrl} type="video/mp4" />
       </video>
 
-      {/* Prominent "Play Intro with Sound" control when unmuted autoplay was blocked (Requirement 2) */}
-      {isSoundBlocked && introState === 'INTRO_PLAYING' && (
-        <div className="absolute inset-x-0 bottom-24 sm:bottom-28 z-30 flex items-center justify-center px-4 pointer-events-auto animate-fade-in">
-          <button
-            onClick={handleEnableSound}
-            aria-label="Play intro video with sound"
-            className="group flex items-center gap-3 px-5 py-3 rounded-full bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/50 hover:border-cyan-400 text-white shadow-[0_0_35px_rgba(34,211,238,0.4)] backdrop-blur-xl transition-all duration-300 cursor-pointer hover:scale-105"
-          >
-            <div className="w-8 h-8 rounded-full bg-cyan-400/20 text-cyan-300 flex items-center justify-center group-hover:bg-cyan-400 group-hover:text-black transition-colors">
-              <Volume2 className="w-4 h-4 animate-pulse" />
-            </div>
-            <div className="text-left">
-              <span className="block text-xs font-mono font-bold tracking-wider text-cyan-300 group-hover:text-white uppercase">
-                Play Intro with Sound
-              </span>
-              <span className="block text-[10px] text-white/60 font-mono">
-                Click to unmute spoken narration
-              </span>
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* Accessible Skip Button */}
-      {introState === 'INTRO_PLAYING' && (
-        <div className="absolute top-6 right-6 z-30 pointer-events-auto">
-          <button
-            onClick={handleSkipIntro}
-            aria-label="Skip introduction video"
-            className="px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/70 border border-white/10 hover:border-white/30 text-white/60 hover:text-white text-[11px] font-mono tracking-widest uppercase backdrop-blur-md transition-all cursor-pointer"
-          >
-            Skip Intro →
-          </button>
-        </div>
-      )}
-
       {/* Playback Failure Recovery Notice */}
       {playbackFailed && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-black/80 backdrop-blur-md">
@@ -251,7 +215,7 @@ export function IntroVideo() {
           </p>
           <button
             onClick={handleEnded}
-            className="px-6 py-2.5 rounded-xl bg-cyan-400 text-black font-mono font-bold text-xs"
+            className="px-6 py-2.5 rounded-xl bg-cyan-400 text-black font-mono font-bold text-xs cursor-pointer hover:bg-cyan-300 transition-colors"
           >
             Continue to Portfolio
           </button>

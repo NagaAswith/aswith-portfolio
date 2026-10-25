@@ -91,6 +91,9 @@ export class LocalStorageProvider implements StorageProvider {
     } else if (type === 'music') {
       targetFolder = 'back_music';
       relativeSubdir = path.join('media', 'back_music');
+    } else if (type === 'background') {
+      targetFolder = 'background';
+      relativeSubdir = path.join('media', 'background');
     } else {
       targetFolder = 'profile';
       relativeSubdir = path.join('media', 'profile');
@@ -148,6 +151,8 @@ export class LocalStorageProvider implements StorageProvider {
       rawPath = `/media/resume/${finalFileName}`;
     } else if (type === 'music') {
       rawPath = `/media/back_music/${finalFileName}`;
+    } else if (type === 'background') {
+      rawPath = `/media/background/${finalFileName}`;
     } else {
       rawPath = `/media/profile/${finalFileName}`;
     }

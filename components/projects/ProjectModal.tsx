@@ -193,7 +193,7 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
           onWheel={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pt-[64px] sm:pt-[72px] pb-4 sm:pb-6 px-3 sm:px-6 md:px-8 bg-black/94 backdrop-blur-3xl overflow-hidden overscroll-contain"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center pt-[64px] sm:pt-[72px] pb-4 sm:pb-6 px-3 sm:px-6 md:px-8 bg-black/75 backdrop-blur-2xl overflow-hidden overscroll-contain"
           style={{ touchAction: 'none' }}
           onClick={onClose}
           role="dialog"

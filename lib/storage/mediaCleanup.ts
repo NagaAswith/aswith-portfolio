@@ -11,6 +11,8 @@ const PROTECTED_BASELINE_ASSETS = new Set([
   '/media/back_music/pirate.mpeg',
   '/media/back_music/pirate.mp3',
   '/media/resume.pdf',
+  '/media/background/back1.mp4',
+  '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4',
 ]);
 
 export interface CleanupResult {
@@ -31,14 +33,23 @@ export async function isMediaReferencedInDatabase(mediaPath: string): Promise<bo
   const normalized = mediaPath.trim();
   const cleanPath = normalized.split('?')[0];
 
+  const rawSuffix = cleanPath.includes('/aswith-portfolio-media/')
+    ? cleanPath.split('/aswith-portfolio-media/')[1]
+    : cleanPath.startsWith('/media/')
+    ? cleanPath.slice('/media/'.length)
+    : cleanPath;
+
+  const rawPath = `/media/${rawSuffix.replace(/^\/+/, '')}`;
+  const candidates = Array.from(new Set([cleanPath, rawPath, rawSuffix].filter(Boolean)));
+
   try {
     // 1. Check Projects mainImage and videoUrl
     const projectMatch = await db.project.findFirst({
       where: {
-        OR: [
-          { mainImage: cleanPath },
-          { videoUrl: cleanPath },
-        ],
+        OR: candidates.flatMap((c) => [
+          { mainImage: c },
+          { videoUrl: c },
+        ]),
       },
     });
     if (projectMatch) return true;
@@ -46,7 +57,7 @@ export async function isMediaReferencedInDatabase(mediaPath: string): Promise<bo
     // 2. Check Project Gallery Images
     const galleryMatch = await db.projectGalleryImage.findFirst({
       where: {
-        imageUrl: cleanPath,
+        OR: candidates.map((c) => ({ imageUrl: c })),
       },
     });
     if (galleryMatch) return true;
@@ -54,7 +65,7 @@ export async function isMediaReferencedInDatabase(mediaPath: string): Promise<bo
     // 3. Check Certificates
     const certMatch = await db.certificate.findFirst({
       where: {
-        image: cleanPath,
+        OR: candidates.map((c) => ({ image: c })),
       },
     });
     if (certMatch) return true;
@@ -64,9 +75,11 @@ export async function isMediaReferencedInDatabase(mediaPath: string): Promise<bo
       where: { id: 'default' },
     });
     if (personal) {
-      if (personal.media && personal.media.includes(cleanPath)) return true;
-      if (personal.social && personal.social.includes(cleanPath)) return true;
-      if (personal.selfIntroVideo && personal.selfIntroVideo.includes(cleanPath)) return true;
+      for (const c of candidates) {
+        if (personal.media && personal.media.includes(c)) return true;
+        if (personal.social && personal.social.includes(c)) return true;
+        if (personal.selfIntroVideo && personal.selfIntroVideo.includes(c)) return true;
+      }
     }
 
     return false;

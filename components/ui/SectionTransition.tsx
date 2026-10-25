@@ -37,7 +37,7 @@ export function SectionTransition({
       id={id}
       initial={{ opacity: 0, y: 36, scale: 0.97 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: false, margin: '-60px' }}
+      viewport={{ once: true, margin: '-20px' }}
       transition={{
         duration: 0.85,
         delay,

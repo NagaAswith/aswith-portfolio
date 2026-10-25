@@ -7,7 +7,7 @@ export interface StorageUploadResult {
   mimeType?: string;
 }
 
-export type StorageUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro' | 'mobileintro' | 'resume' | 'music';
+export type StorageUploadType = 'certificate' | 'project' | 'profile' | 'intro' | 'selfintro' | 'mobileintro' | 'resume' | 'music' | 'background';
 
 export interface StorageProvider {
   uploadFile(

@@ -27,12 +27,14 @@ import { useIntroStore } from '@/store/useIntroStore';
 export default function Home() {
   const introState = useIntroStore((state) => state.introState);
   const isPortfolioActive = introState === 'PORTFOLIO_ACTIVE';
+  const isPortfolioVisible =
+    introState === 'PORTFOLIO_REVEAL' || introState === 'PORTFOLIO_ACTIVE';
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [isPastHero, setIsPastHero] = useState(false);
 
   // Section-aware background: Activates ONLY from Section 2 (Projects) onwards
   useEffect(() => {
-    if (!isPortfolioActive) return;
+    if (!isPortfolioVisible) return;
 
     const handleScroll = () => {
       const heroThreshold = window.innerHeight * 0.45;
@@ -43,7 +45,7 @@ export default function Home() {
     handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isPortfolioActive]);
+  }, [isPortfolioVisible]);
 
   return (
     <main className="relative min-h-screen bg-black text-white selection:bg-white selection:text-black">
@@ -63,7 +65,7 @@ export default function Home() {
       {/* Special Background (ASCII Digital Rain) — Page 2+ only, smooth fade-in */}
       <div
         className="fixed inset-0 z-0 pointer-events-none transition-opacity duration-1000 ease-out"
-        style={{ opacity: isPastHero && isPortfolioActive ? 1 : 0 }}
+        style={{ opacity: isPastHero && isPortfolioVisible ? 1 : 0 }}
       >
         <AsciiRain />
       </div>
@@ -75,7 +77,11 @@ export default function Home() {
       <FallbackNotice />
 
       {/* Portfolio World Content */}
-      {isPortfolioActive && (
+      {isPortfolioVisible && (
+        <div
+          className="transition-opacity duration-1000 ease-out"
+          style={{ opacity: isPortfolioActive ? 1 : 0.85 }}
+        >
         <>
           {/* Global Header Navigation */}
           <Navbar />
@@ -130,6 +136,7 @@ export default function Home() {
             <ContactSection />
           </SectionTransition>
         </>
+        </div>
       )}
     </main>
   );

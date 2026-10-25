@@ -3920,6 +3920,58 @@ export function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* Continuous Particle-Tunnel Background Video */}
+                <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-white">Particle-Tunnel Background Video</h4>
+                    <span className="text-[11px] font-mono text-cyan-400">Continuous Cinematic Background</span>
+                  </div>
+
+                  {/* Direct File Upload */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Upload from Device</span>
+                    <MediaFileUpload
+                      targetType="background"
+                      mediaCategory="video"
+                      accentColor="cyan"
+                      buttonLabel="Upload Background Video"
+                      onSuccess={(newPath) => {
+                        setMediaForm((prev) => ({ ...prev, backgroundVideo: newPath }));
+                        notify('Background video staged. Click Save Media Mappings to commit.');
+                      }}
+                    />
+                  </div>
+
+                  {/* Remote URL / Google Drive Import */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-white/50 uppercase">Import from URL / Google Drive</span>
+                    <MediaImportControl
+                      currentValue={mediaForm.backgroundVideo || '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4'}
+                      targetType="background"
+                      accentColor="cyan"
+                      buttonLabel="Import & Replace Background Video"
+                      placeholder="Paste background video MP4 URL or public Google Drive link..."
+                      onSuccess={(newPath) => {
+                        setMediaForm((prev) => ({ ...prev, backgroundVideo: newPath }));
+                        notify('Background video staged. Click Save Media Mappings to commit.');
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] font-mono text-white/40 uppercase">Storage Path</span>
+                    <input
+                      type="text"
+                      value={mediaForm.backgroundVideo || '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4'}
+                      onChange={(e) => setMediaForm({ ...mediaForm, backgroundVideo: e.target.value })}
+                      className="w-full bg-white/5 border border-white/15 rounded-lg p-2.5 text-xs font-mono text-white"
+                    />
+                    <p className="text-[11px] font-mono text-white/40">
+                      Authoritative particle-tunnel background video container stored at <code>{mediaForm.backgroundVideo || '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4'}</code>.
+                    </p>
+                  </div>
+                </div>
+
                 {/* Background Music Management Card (Requirement 5) */}
                 <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 space-y-4">
                   <div className="flex items-center justify-between">
@@ -4058,6 +4110,7 @@ export function AdminDashboard() {
                     if (oldMedia.selfIntroVideo && oldMedia.selfIntroVideo !== mediaForm.selfIntroVideo) replacedPaths.push(oldMedia.selfIntroVideo);
                     if (oldMedia.introVideo && oldMedia.introVideo !== mediaForm.introVideo) replacedPaths.push(oldMedia.introVideo);
                     if (oldMedia.mobileIntroVideo && oldMedia.mobileIntroVideo !== mediaForm.mobileIntroVideo) replacedPaths.push(oldMedia.mobileIntroVideo);
+                    if (oldMedia.backgroundVideo && oldMedia.backgroundVideo !== mediaForm.backgroundVideo) replacedPaths.push(oldMedia.backgroundVideo);
                     if (oldMedia.backgroundMusic && oldMedia.backgroundMusic !== mediaForm.backgroundMusic) replacedPaths.push(oldMedia.backgroundMusic);
 
                     for (const oldPath of replacedPaths) {

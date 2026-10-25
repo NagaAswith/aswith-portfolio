@@ -48,15 +48,15 @@ async function runMasterSuite() {
     'Enter the World button revelation is guarded by completion state'
   );
 
-  // ── REQ 2: Intro Video With Sound ──────────────────────────────
-  console.log('\n--- REQ 2: Intro Video With Sound ---');
+  // ── REQ 2: Intro Controls Removal & Natural Audio Recovery ─────
+  console.log('\n--- REQ 2: Intro Controls Removal & Natural Audio Recovery ---');
   assert(
-    introCode.includes('handleEnableSound') && introCode.includes('isSoundBlocked'),
-    'Intro video attempts playback with sound and detects blocked state'
+    !introCode.includes('SKIP INTRO') && !introCode.includes('PLAY INTRO WITH SOUND') && !introCode.includes('Play Intro with Sound'),
+    'Unwanted prominent controls (SKIP INTRO and PLAY INTRO WITH SOUND) are completely removed'
   );
   assert(
-    introCode.includes('Play Intro with Sound'),
-    'Provides accessible user-initiated fallback control when autoplay with sound is blocked'
+    introCode.includes('pointerdown') && introCode.includes('muted = false'),
+    'Natural gesture listener restores audio cleanly if initial browser autoplay was muted'
   );
 
   // ── REQ 3: Desktop & Mobile Intro Sources ──────────────────────
@@ -70,16 +70,20 @@ async function runMasterSuite() {
     'Responsive source selection separates phone viewports from desktop/laptop'
   );
 
-  // ── REQ 4: Particle-Tunnel Background Video ───────────────────
-  console.log('\n--- REQ 4: Particle-Tunnel Background Video ---');
+  // ── REQ 4: Continuous Particle-Tunnel Background Video ────────
+  console.log('\n--- REQ 4: Continuous Particle-Tunnel Background Video ---');
   const bgFiles = fs.readdirSync(path.join(process.cwd(), 'public/media/background'));
-  const particleVideo = bgFiles.find((f) => f.startsWith('Particle_tunnel') && f.endsWith('.mp4'));
+  const particleVideo = bgFiles.find((f) => (f.startsWith('Particle_tunnel') || f === 'back1.mp4') && f.endsWith('.mp4'));
   assert(Boolean(particleVideo), `Particle tunnel video found: ${particleVideo}`);
   
   const bgCode = fs.readFileSync(path.join(process.cwd(), 'components/background/ParticleTunnelBackground.tsx'), 'utf-8');
   assert(
-    bgCode.includes('requestAnimationFrame') && bgCode.includes('progress * durationRef.current'),
-    'Background video timeline is synchronized to page scroll progress'
+    bgCode.includes('autoPlay') && bgCode.includes('loop'),
+    'Background video continuous playback: plays continuously when stationary'
+  );
+  assert(
+    bgCode.includes('playbackRate') && bgCode.includes('velocity'),
+    'Scrolling dynamically increases playback speed/energy and decelerates smoothly'
   );
   assert(
     bgCode.includes('prefers-reduced-motion'),

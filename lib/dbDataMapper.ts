@@ -13,6 +13,7 @@ const defaultMediaConfig: MediaConfig = {
   selfIntroVideo: resolveSupabaseMediaUrl('/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4'),
   introVideo: resolveSupabaseMediaUrl('/media/intro/intro-video.mp4'),
   mobileIntroVideo: resolveSupabaseMediaUrl('/media/mobileintro/Mobileintro.mp4'),
+  backgroundVideo: resolveSupabaseMediaUrl('/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4'),
   resumePdf: '/media/resume.pdf',
   projectsMediaDir: 'public/media/projects/',
   certificatesMediaDir: 'public/media/certificates/',
@@ -185,6 +186,7 @@ export async function fetchFullAdminData() {
     selfIntroVideo: resolveSupabaseMediaUrl(rawMedia.selfIntroVideo),
     introVideo: resolveSupabaseMediaUrl(rawMedia.introVideo || defaultMediaConfig.introVideo),
     mobileIntroVideo: resolveSupabaseMediaUrl(rawMedia.mobileIntroVideo || defaultMediaConfig.mobileIntroVideo),
+    backgroundVideo: resolveSupabaseMediaUrl(rawMedia.backgroundVideo || defaultMediaConfig.backgroundVideo || '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4'),
   };
 
   return {

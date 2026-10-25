@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, FileText, ArrowUpRight, Send, CheckCircle, AlertCircle, MessageSquare, Globe, Code2 } from 'lucide-react';
+import { Mail, Phone, FileText, ArrowUpRight, Send, CheckCircle, AlertCircle, MessageSquare } from 'lucide-react';
 import { MovingGradientButton } from '@/components/ui/MovingGradientButton';
 import { usePortfolioContent } from '@/store/usePortfolioContent';
 
@@ -120,7 +120,7 @@ export function ContactSection() {
   return (
     <footer
       id="contact"
-      className="relative z-20 bg-black border-t border-white/10 text-white pt-20 pb-12 px-6 sm:px-12 mt-28"
+      className="relative z-20 bg-black/60 backdrop-blur-xl border-t border-white/10 text-white pt-20 pb-12 px-6 sm:px-12 mt-28"
       aria-label="Contact & Footer Information"
     >
       <div className="max-w-7xl mx-auto space-y-16">

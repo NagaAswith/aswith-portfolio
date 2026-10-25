@@ -5,7 +5,7 @@ import { Download, CheckCircle2, AlertTriangle, Loader2, Link2 } from 'lucide-re
 
 interface MediaImportControlProps {
   currentValue?: string;
-  targetType: 'project' | 'certificate' | 'profile' | 'intro' | 'mobileintro' | 'selfintro' | 'resume' | 'music';
+  targetType: 'project' | 'certificate' | 'profile' | 'intro' | 'mobileintro' | 'selfintro' | 'background' | 'resume' | 'music';
   targetId?: string;
   slot?: string;
   onSuccess: (newPath: string, publicUrl: string, targetId?: string) => void;

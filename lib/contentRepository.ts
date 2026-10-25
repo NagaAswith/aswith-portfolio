@@ -10,6 +10,7 @@ export interface MediaConfig {
   selfIntroVideo: string;
   introVideo: string; // Main hero pre-loader intro video path (desktop/laptop)
   mobileIntroVideo: string; // Separate mobile portrait intro video path
+  backgroundVideo?: string; // Continuous particle tunnel background video path
   resumePdf: string;
   projectsMediaDir: string;
   certificatesMediaDir: string;
@@ -23,6 +24,7 @@ const defaultMediaConfig: MediaConfig = {
   selfIntroVideo: '/media/selfintro/WhatsApp Video 2026-08-18 at 4.02.51 PM.mp4',
   introVideo: '/media/intro/intro-video.mp4',
   mobileIntroVideo: '/media/mobileintro/Mobileintro.mp4',
+  backgroundVideo: '/media/background/Particle_tunnel_portfolio_video___20261024144915.mp4',
   resumePdf: '/media/resume.pdf',
   projectsMediaDir: 'public/media/projects/',
   certificatesMediaDir: 'public/media/certificates/',

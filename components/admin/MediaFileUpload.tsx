@@ -12,6 +12,7 @@ export type MediaFileUploadType =
   | 'intro'
   | 'selfintro'
   | 'mobileintro'
+  | 'background'
   | 'resume'
   | 'music';
 
@@ -39,6 +40,7 @@ interface MediaFileUploadProps {
   accentColor?: 'cyan' | 'emerald' | 'purple' | 'orange';
   buttonLabel?: string;
   onSuccess?: (storedPath: string, publicUrl: string, allocatedId?: string) => void;
+  onDiscard?: () => void;
   disabled?: boolean;
 }
 
@@ -73,6 +75,7 @@ export function MediaFileUpload({
   accentColor = 'cyan',
   buttonLabel,
   onSuccess,
+  onDiscard,
   disabled = false,
 }: MediaFileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +92,7 @@ export function MediaFileUpload({
 
   const defaultLabel =
     mediaCategory === 'video'
-      ? `Upload ${targetType === 'intro' ? 'Intro' : targetType === 'mobileintro' ? 'Mobile Intro' : 'Project'} Video`
+      ? `Upload ${targetType === 'intro' ? 'Intro' : targetType === 'mobileintro' ? 'Mobile Intro' : targetType === 'background' ? 'Background' : 'Project'} Video`
       : mediaCategory === 'document'
       ? 'Upload Resume Document'
       : mediaCategory === 'audio'
@@ -136,13 +139,14 @@ export function MediaFileUpload({
     setSuccessPath('');
     setProcessingStatus('');
     if (fileInputRef.current) fileInputRef.current.value = '';
+    if (onDiscard) onDiscard();
   };
 
   const handleUpload = async () => {
     let fileToUpload = processedFile || selectedFile;
     if (!fileToUpload) return;
 
-    // Check if large video needs compression before sending to server (Requirement 15)
+    // Check if large video needs compression before sending to storage
     if (mediaCategory === 'video' && fileToUpload.size > 48 * 1024 * 1024) {
       try {
         setUploadState('PROCESSING');
@@ -158,40 +162,108 @@ export function MediaFileUpload({
 
     setUploadState('UPLOADING');
     setErrorMessage('');
-    setProcessingStatus('Uploading to secure cloud storage...');
+    setProcessingStatus('Authorizing storage upload...');
 
     try {
-      const formData = new FormData();
-      formData.append('file', fileToUpload);
-      formData.append('type', targetType);
-      formData.append('mediaCategory', mediaCategory);
-      if (targetId) formData.append('targetId', targetId);
-      if (slot) formData.append('slot', slot);
-
-      const res = await fetch('/api/admin/upload', {
+      // Step 1: Request upload signature from server endpoint
+      const signRes = await fetch('/api/admin/upload/sign', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: fileToUpload.name,
+          fileSize: fileToUpload.size,
+          type: targetType,
+          mediaCategory,
+          targetId,
+          slot,
+        }),
         credentials: 'include',
       });
 
-      const data = await res.json();
+      const isSignJson = signRes.headers.get('content-type')?.includes('application/json');
+      let signData: any = null;
+      if (isSignJson) {
+        signData = await signRes.json();
+      } else {
+        const textErr = await signRes.text();
+        throw new Error(
+          signRes.status === 413
+            ? `File exceeds server limit (${(fileToUpload.size / (1024 * 1024)).toFixed(1)} MB). Max limit is ${maxMb} MB.`
+            : `Upload authorization failed (HTTP ${signRes.status}): ${textErr.slice(0, 100)}`
+        );
+      }
 
-      if (!res.ok || !data.success) {
-        const msg = data.error || `Upload failed (HTTP ${res.status}).`;
-        setUploadState('ERROR');
-        setErrorMessage(msg);
-        return;
+      if (!signRes.ok || !signData.success) {
+        throw new Error(signData.error || `Upload authorization failed (HTTP ${signRes.status})`);
+      }
+
+      let finalRawPath = '';
+      let finalPublicUrl = '';
+
+      if (!signData.useDirectApi && signData.signedUrl) {
+        // Step 2A: Direct upload to Supabase Storage via signed URL (bypasses Vercel 4.5 MB proxy limit)
+        setProcessingStatus('Uploading directly to cloud storage CDN...');
+        const directRes = await fetch(signData.signedUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': fileToUpload.type || 'application/octet-stream',
+          },
+          body: fileToUpload,
+        });
+
+        if (!directRes.ok) {
+          const directErr = await directRes.text();
+          throw new Error(`Direct cloud storage upload failed (HTTP ${directRes.status}): ${directErr.slice(0, 100)}`);
+        }
+
+        finalRawPath = signData.rawPath;
+        finalPublicUrl = signData.publicUrl;
+      } else {
+        // Step 2B: Local Dev / Direct API fallback
+        setProcessingStatus('Uploading to local storage endpoint...');
+        const formData = new FormData();
+        formData.append('file', fileToUpload);
+        formData.append('type', targetType);
+        formData.append('mediaCategory', mediaCategory);
+        if (targetId) formData.append('targetId', targetId);
+        if (slot) formData.append('slot', slot);
+
+        const uploadRes = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+
+        const isUploadJson = uploadRes.headers.get('content-type')?.includes('application/json');
+        let uploadData: any = null;
+        if (isUploadJson) {
+          uploadData = await uploadRes.json();
+        } else {
+          const text = await uploadRes.text();
+          if (uploadRes.status === 413) {
+            throw new Error(`Payload too large (${(fileToUpload.size / (1024 * 1024)).toFixed(1)} MB). Server returned HTTP 413.`);
+          }
+          throw new Error(`Upload returned non-JSON response (HTTP ${uploadRes.status}): ${text.slice(0, 100)}`);
+        }
+
+        if (!uploadRes.ok || !uploadData.success) {
+          throw new Error(uploadData.error || `Upload failed (HTTP ${uploadRes.status})`);
+        }
+
+        finalRawPath = uploadData.rawPath || uploadData.url || '';
+        finalPublicUrl = uploadData.url || '';
       }
 
       setUploadState('SUCCESS');
       setProcessingStatus('');
-      setSuccessPath(data.rawPath || data.url || '');
+      setSuccessPath(finalRawPath);
 
       if (onSuccess) {
-        onSuccess(data.rawPath || data.url || '', data.url || '', targetId);
+        onSuccess(finalRawPath, finalPublicUrl, targetId);
       }
     } catch (err: unknown) {
       setUploadState('ERROR');
+      setProcessingStatus('');
       setErrorMessage((err as Error)?.message || 'Network error during upload. Please try again.');
     }
   };
@@ -303,16 +375,26 @@ export function MediaFileUpload({
 
       {/* Success state */}
       {uploadState === 'SUCCESS' && (
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span className="text-[11px] font-mono text-emerald-400">
-            Uploaded as draft. Click Save to persist change.
-          </span>
-          {successPath && (
-            <span className="text-[10px] font-mono text-white/40 truncate max-w-[220px]" title={successPath}>
-              → {successPath}
+        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-[11px] font-mono text-emerald-400">
+              Uploaded as draft. Click Save to persist change.
             </span>
-          )}
+            {successPath && (
+              <span className="text-[10px] font-mono text-white/40 truncate max-w-[220px]" title={successPath}>
+                → {successPath}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleClear}
+            className="text-[10px] font-mono text-white/40 hover:text-red-400 transition-colors px-2 py-0.5 rounded border border-white/10 hover:border-red-500/30 shrink-0"
+            title="Discard this draft and choose another file"
+          >
+            Discard
+          </button>
         </div>
       )}
 
