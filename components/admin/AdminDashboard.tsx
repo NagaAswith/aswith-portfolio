@@ -2226,6 +2226,40 @@ export function AdminDashboard() {
     }
   };
 
+  // Protected Reset Modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetCode, setResetCode] = useState('');
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const handleAuthorizeReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError(null);
+    setResetLoading(true);
+    try {
+      const res = await fetch('/api/admin/auth/verify-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: resetCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setResetError(data.error || 'Incorrect admin key. Reset rejected.');
+        return;
+      }
+      setIsResetModalOpen(false);
+      setResetCode('');
+      if (window.confirm('Reset all portfolio content to initial seed data?')) {
+        resetToDefault();
+        notify('Portfolio content reset to initial seed values.');
+      }
+    } catch {
+      setResetError('Network error connecting to authorization server.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const notify = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3500);
@@ -4196,10 +4230,9 @@ export function AdminDashboard() {
                   </p>
                   <button
                     onClick={() => {
-                      if (window.confirm('Reset all portfolio content to initial seed data?')) {
-                        resetToDefault();
-                        notify('Portfolio content reset to initial seed values.');
-                      }
+                      setResetCode('');
+                      setResetError(null);
+                      setIsResetModalOpen(true);
                     }}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs font-mono cursor-pointer"
                   >
@@ -4352,6 +4385,78 @@ export function AdminDashboard() {
                     className="px-5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-black font-semibold text-xs font-mono cursor-pointer flex items-center gap-2"
                   >
                     {revealLoading ? 'Verifying...' : 'Authorize & Reveal'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Protected Reset Confirmation Modal */}
+      <AnimatePresence>
+        {isResetModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-zinc-950 border border-red-500/30 rounded-2xl p-6 shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2 text-red-400">
+                  <ShieldCheck className="w-5 h-5" />
+                  <h3 className="text-sm font-semibold text-white">Authorize Portfolio Reset</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsResetModalOpen(false)}
+                  className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-white/60">
+                Resetting portfolio data will restore initial seed content across all sections. Enter the admin key to authorize this operation.
+              </p>
+
+              <form onSubmit={handleAuthorizeReset} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono uppercase text-white/50">Admin Key</label>
+                  <input
+                    type="password"
+                    maxLength={10}
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    placeholder="Enter admin key"
+                    autoFocus
+                    required
+                    className="w-full bg-white/5 border border-white/15 focus:border-red-400 rounded-lg p-3 text-center text-lg tracking-widest font-mono text-white outline-none"
+                  />
+                </div>
+
+                {resetError && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{resetError}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsResetModalOpen(false)}
+                    className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading || !resetCode}
+                    className="px-5 py-2 rounded-lg bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white font-semibold text-xs font-mono cursor-pointer flex items-center gap-2"
+                  >
+                    {resetLoading ? 'Verifying...' : 'Authorize Reset'}
                   </button>
                 </div>
               </form>

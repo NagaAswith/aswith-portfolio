@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { isAuthenticatedAdmin } from '@/lib/adminAuth';
+import { isAuthenticatedAdmin, verifyAdminKey } from '@/lib/adminAuth';
 import { validateCsrfOrigin } from '@/lib/csrf';
 import { rateLimiter, getClientIp } from '@/lib/rateLimit';
 
 // Initial configured reveal password as requested in specification
-const DEFAULT_REVEAL_PASSWORD = '0409';
+const DEFAULT_REVEAL_PASSWORD = '0406';
 
 export async function POST(req: Request) {
   // 1. Must be an authenticated admin session
@@ -53,8 +53,8 @@ export async function POST(req: Request) {
 
     const expectedCode = process.env.ADMIN_REVEAL_PASSWORD || DEFAULT_REVEAL_PASSWORD;
 
-    // Constant-time check comparison
-    if (code.trim() !== expectedCode) {
+    // Check against configured admin key or fallback
+    if (!verifyAdminKey(code) && code.trim() !== expectedCode) {
       return NextResponse.json(
         {
           success: false,
